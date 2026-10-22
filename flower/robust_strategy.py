@@ -94,6 +94,12 @@ class RobustFedAvg(FedAvg):
 
     @staticmethod
     def _aggregate_krum(weights_list: List[List[np.ndarray]], f: int) -> List[np.ndarray]:
+        """Krum aggregation (Blanchard et al., NeurIPS 2017).
+
+        Note: Theorem 1 requires n >= 2f + 3 (at least 5 clients for f=1).
+        In a 4-silo federation, Coordinate-wise Median and Trimmed Mean
+        (requiring n >= 2f + 1, so 4 >= 3) are the formally guaranteed defenses.
+        """
         n = len(weights_list)
         if n <= 2:
             return RobustFedAvg._aggregate_median(weights_list)

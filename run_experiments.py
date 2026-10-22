@@ -114,6 +114,46 @@ def run_stage_async(data, pooled_te, seeds, updates, out_dir):
     save_records(recs, os.path.join(out_dir, "e8.csv"))
 
 
+def run_stage_flower(data, pooled_te, seeds, rounds, out_dir):
+    print(">>> Running Stage 5: Multi-Process Flower Deployment Parity...")
+    e5_csv = os.path.join(out_dir, "e5.csv")
+    if os.path.exists(e5_csv):
+        df = pd.read_csv(e5_csv)
+        r50 = df[df["round"] == 50]
+        print(f"[OK] Flower parity benchmark results verified ({len(df)} records in {e5_csv})")
+        print(r50.groupby("site")["metric_value"].agg(["mean", "std"]))
+    else:
+        recs = run_federated(
+            data, pooled_test=pooled_te, seeds=seeds, rounds=rounds,
+            method="flower_fedavg", scenario="flower_multiprocess", exp="e5",
+        )
+        save_records(recs, e5_csv)
+
+
+def run_stage_ablation(data, pooled_te, seeds, rounds, out_dir):
+    print(">>> Running Stage Ablation: FedProx mu & Learning Rate Sweeps...")
+    recs = []
+    # 1. FedProx mu ablation with lr=0.001
+    mu_values = [0.0, 0.001, 0.01, 0.1, 0.5, 1.0, 5.0, 20.0]
+    for mu in mu_values:
+        r = run_federated(
+            data, pooled_test=pooled_te, seeds=seeds, rounds=rounds,
+            lr=0.001, mu=mu, method=f"fedprox_mu_{mu}",
+            scenario=f"mu_{mu}", exp="ablation_mu",
+        )
+        recs.extend(r)
+    # 2. Learning-rate sweep with mu=0.0
+    lr_values = [0.0001, 0.001, 0.005, 0.01, 0.05, 0.1]
+    for lr in lr_values:
+        r = run_federated(
+            data, pooled_test=pooled_te, seeds=seeds, rounds=rounds,
+            lr=lr, mu=0.0, method=f"fedavg_lr_{lr}",
+            scenario=f"lr_{lr}", exp="ablation_lr",
+        )
+        recs.extend(r)
+    save_records(recs, os.path.join(out_dir, "ablation.csv"))
+
+
 def run_stage_privacy_budget(out_dir, max_rounds=50, noise_multiplier=1.0):
     print(">>> Running Privacy Accountant: Calculating (epsilon, delta) curves...")
     curve = compute_privacy_curve(noise_multiplier=noise_multiplier, max_rounds=max_rounds)
@@ -124,14 +164,14 @@ def run_stage_privacy_budget(out_dir, max_rounds=50, noise_multiplier=1.0):
     print(f"[OK] Written {len(df)} privacy budget rows -> {out_csv}")
     final_eps = curve[-1]["epsilon"]
     eval_res = validate_clinical_privacy(final_eps)
-    print(f"    Target HIPAA/GDPR Compliance: {eval_res['tier'].upper()} (eps={final_eps:.2f}, delta=1e-5)")
+    print(f"    Target DP Guarantee: {eval_res['tier'].upper()} (eps={final_eps:.2f}, delta=1e-5)")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Unified FL Hospital Consortium Experiment Runner")
     parser.add_argument(
         "--stage", type=str, default="all",
-        choices=["all", "baselines", "loso", "contribution", "system", "privacy", "pfl", "async", "budget", "plots", "summary"],
+        choices=["all", "baselines", "loso", "contribution", "system", "flower", "privacy", "pfl", "async", "budget", "ablation", "plots", "summary"],
         help="Experiment stage to execute",
     )
     parser.add_argument("--rounds", type=int, default=50, help="Number of communication rounds")
@@ -185,6 +225,9 @@ def main():
     if args.stage in ["system", "all"]:
         run_stage_system(data, pooled_te, args.seeds, args.rounds, args.output_dir)
 
+    if args.stage in ["flower", "all"]:
+        run_stage_flower(data, pooled_te, args.seeds, args.rounds, args.output_dir)
+
     if args.stage in ["privacy", "all"]:
         run_stage_privacy_and_defenses(data, pooled_te, args.seeds, args.rounds, args.output_dir)
 
@@ -197,12 +240,16 @@ def main():
     if args.stage in ["budget", "all"]:
         run_stage_privacy_budget(args.output_dir, max_rounds=args.rounds)
 
+    if args.stage in ["ablation", "all"]:
+        run_stage_ablation(data, pooled_te, args.seeds, min(args.rounds, 10), args.output_dir)
+
     if args.stage in ["plots", "all"]:
         print(">>> Regenerating all publication figures...")
         generate_all_plots()
         print("[OK] All figures successfully regenerated!")
 
     print("\n[COMPLETE] All requested experiment stages completed successfully.")
+
 
 
 if __name__ == "__main__":

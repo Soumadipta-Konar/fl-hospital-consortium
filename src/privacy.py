@@ -55,6 +55,17 @@ def aggregate_trimmed_mean(client_weights, beta=1):
     return trimmed_sd
 
 def aggregate_krum(client_weights, f=1):
+    """Krum Byzantine-robust aggregation (Blanchard et al., NeurIPS 2017).
+
+    THEORETICAL PRECONDITION NOTICE:
+    Theorem 1 of Blanchard et al. (2017) guarantees convergence to a benign vector
+    if and only if: n >= 2f + 3.
+    For f=1 adversary, Krum strictly requires at least n = 5 clients.
+    In a 4-hospital consortium (n=4), this theoretical precondition is formally
+    violated (4 < 2(1) + 3 = 5). For 4-client cross-silo consortia with f=1,
+    Coordinate-wise Median and Trimmed Mean (requiring n >= 2f + 1, so 4 >= 3)
+    are the formally valid Byzantine defenses.
+    """
     n = len(client_weights)
     if n <= 2:
         return aggregate_median(client_weights)
