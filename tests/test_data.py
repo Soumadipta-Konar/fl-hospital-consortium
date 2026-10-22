@@ -1,9 +1,15 @@
+from pathlib import Path
+import pytest
 from src.data import load_all_sites, load_pooled_data, get_site_summary, SITE_NAMES, NUM_SITES
+
+DATA_DIR = Path("data/fed_heart_disease")
+HAS_DATA = DATA_DIR.exists() and len(list(DATA_DIR.glob("*.data"))) == 4
 
 def test_site_metadata():
     assert NUM_SITES == 4
     assert SITE_NAMES == ["cleveland", "hungarian", "switzerland", "va"]
 
+@pytest.mark.skipif(not HAS_DATA, reason="FLamby raw dataset not present on disk")
 def test_load_all_sites():
     sites_data = load_all_sites()
     assert len(sites_data) == 4
@@ -17,6 +23,7 @@ def test_load_all_sites():
         assert train_x.shape[0] == train_y.shape[0]
         assert test_x.shape[0] == test_y.shape[0]
 
+@pytest.mark.skipif(not HAS_DATA, reason="FLamby raw dataset not present on disk")
 def test_pooled_data():
     x_tr, y_tr = load_pooled_data(train=True)
     x_te, y_te = load_pooled_data(train=False)
@@ -26,6 +33,7 @@ def test_pooled_data():
     assert x_te.shape == (254, 13)
     assert y_te.shape == (254, 1)
 
+@pytest.mark.skipif(not HAS_DATA, reason="FLamby raw dataset not present on disk")
 def test_site_summary():
     df = get_site_summary()
     assert len(df) == 4

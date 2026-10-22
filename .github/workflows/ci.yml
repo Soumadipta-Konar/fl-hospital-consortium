@@ -45,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.11"]
 
     steps:
       - name: Checkout code
@@ -61,6 +61,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Fetch FLamby Dataset
+        continue-on-error: true
+        run: |
+          python -m flamby.datasets.fed_heart_disease.dataset_creation_scripts.download --output-folder data/fed_heart_disease
 
       - name: Run Test Suite
         run: |
