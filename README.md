@@ -13,9 +13,11 @@
 </p>
 
 <p align="center">
-  <video src="dashboard_demo_README.mp4" controls autoplay loop muted playsinline width="100%" onloadedmetadata="this.playbackRate = 2.0;" style="border-radius: 8px; border: 1px solid #2D2D2D;"></video>
+  <a href="https://soumadipta-konar.github.io/fl-hospital-consortium/">
+    <img src="dashboard_demo.gif" alt="Interactive Control Plane Demo (2x Speed)" width="100%" style="border-radius: 8px; border: 1px solid #2D2D2D;">
+  </a>
   <br>
-  <em>Interactive control plane benchmarking simulator (running in 2x playback). <a href="https://soumadipta-konar.github.io/fl-hospital-consortium/"><b>🚀 Launch Live Dashboard on GitHub Pages</b></a></em>
+  <em>Interactive control plane benchmarking simulator (rendered in 2x playback). <a href="https://soumadipta-konar.github.io/fl-hospital-consortium/"><b>🚀 Launch Live Dashboard on GitHub Pages</b></a></em>
 </p>
 
 > [!IMPORTANT]
