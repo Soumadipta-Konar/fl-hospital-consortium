@@ -1,14 +1,10 @@
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
 import pytest
 
-try:
-    import flamby
-    HAS_FLAMBY = True
-except ImportError:
-    HAS_FLAMBY = False
-
+HAS_FLAMBY = importlib.util.find_spec("flamby") is not None
 DATA_DIR = Path("data/fed_heart_disease")
 HAS_DATA = DATA_DIR.exists() and len(list(DATA_DIR.glob("*.data"))) == 4
 
