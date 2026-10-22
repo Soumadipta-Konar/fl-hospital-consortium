@@ -114,7 +114,7 @@ python dashboard.py --port 8080 --no-browser
 ### Interactive Dashboard Video Demo 
 
 <p align="center">
-  <video src="dashboard_demo.mp4" controls autoplay loop muted playsinline width="100%" onloadedmetadata="this.playbackRate = 2.0;" style="border-radius: 8px; border: 1px solid #2D2D2D;"></video>
+  <video src="dashboard_demo_README.mp4" controls autoplay loop muted playsinline width="100%" onloadedmetadata="this.playbackRate = 2.0;" style="border-radius: 8px; border: 1px solid #2D2D2D;"></video>
   <br>
   <em>Interactive control plane benchmarking simulator (running in 2x playback). Click <a href="https://soumadipta-konar.github.io/fl-hospital-consortium/">here</a> to open the live deployed dashboard.</em>
 </p>
