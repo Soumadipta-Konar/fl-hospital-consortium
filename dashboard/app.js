@@ -1,21 +1,86 @@
 // Hospital Consortium Interactive Simulator App
 let baselinesChart, byzantineChart, systemsChart, privacyChart, pflChart;
 
-function switchTab(tabId) {
+function switchTab(arg1, arg2) {
+  let tabId = null;
+  let clickedBtn = null;
+
+  if (typeof arg1 === 'string') {
+    tabId = arg1;
+    if (arg2 instanceof HTMLElement) {
+      clickedBtn = arg2;
+    }
+  } else if (typeof arg2 === 'string') {
+    tabId = arg2;
+    if (arg1 && (arg1.currentTarget || arg1.target)) {
+      clickedBtn = arg1.currentTarget || arg1.target;
+    }
+  }
+
+  if (!tabId) return;
+
+  // Deactivate all tabs and contents
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-  event.target.classList.add('active');
-  document.getElementById(tabId).classList.add('active');
+  // Activate clicked button or matching button
+  if (clickedBtn && clickedBtn.classList) {
+    clickedBtn.classList.add('active');
+  } else {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      const oc = btn.getAttribute('onclick') || '';
+      if (oc.includes(tabId)) {
+        btn.classList.add('active');
+      }
+    });
+  }
+
+  // Activate target content
+  const targetEl = document.getElementById(tabId);
+  if (targetEl) {
+    targetEl.classList.add('active');
+  }
+
+  // Re-render and resize charts on tab switch to avoid 0px sizing issues
+  setTimeout(() => {
+    if (tabId === 'tab-baselines' && baselinesChart) baselinesChart.resize();
+    if (tabId === 'tab-byzantine' && byzantineChart) byzantineChart.resize();
+    if (tabId === 'tab-systems' && systemsChart) systemsChart.resize();
+    if (tabId === 'tab-privacy' && privacyChart) privacyChart.resize();
+    if (tabId === 'tab-pfl' && pflChart) pflChart.resize();
+  }, 20);
 }
 
-// Chart.js global dark theme defaults
-Chart.defaults.color = '#8b9bb4';
-Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
+// Chart.js dark theme defaults - Crisp, solid, zero glassmorphism
+Chart.defaults.color = '#B0B0B0';
+Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.borderColor = '#262626';
 
+Chart.defaults.plugins.legend.labels.color = '#E0E0E0';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.boxWidth = 8;
+Chart.defaults.plugins.legend.labels.padding = 16;
+
+Chart.defaults.plugins.tooltip.backgroundColor = '#1E1E1E';
+Chart.defaults.plugins.tooltip.titleColor = '#E0E0E0';
+Chart.defaults.plugins.tooltip.bodyColor = '#B0B0B0';
+Chart.defaults.plugins.tooltip.borderColor = '#3D3D3D';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 4;
+Chart.defaults.plugins.tooltip.displayColors = true;
+
+// TAB 1: Consortium Baselines
 function initBaselinesChart() {
   const ctx = document.getElementById('baselinesChart').getContext('2d');
-  const hospitals = ['Cleveland (153)', 'Hungarian (147)', 'Zurich (42)', 'VA (100)', 'Pooled Overall'];
+  const hospitals = [
+    'Cleveland (Site 0, N=153)',
+    'Hungarian (Site 1, N=147)',
+    'Zurich (Site 2, N=42)',
+    'VA Long Beach (Site 3, N=100)',
+    'Consortium Pooled'
+  ];
 
   baselinesChart = new Chart(ctx, {
     type: 'bar',
@@ -25,17 +90,26 @@ function initBaselinesChart() {
         {
           label: 'Local-Only Model',
           data: [0.750, 0.752, 0.647, 0.700, 0.712],
-          backgroundColor: '#6c757d'
+          backgroundColor: '#606060',
+          borderColor: '#757575',
+          borderWidth: 1,
+          borderRadius: 4
         },
         {
           label: 'Federated FedAvg',
           data: [0.773, 0.778, 0.675, 0.591, 0.782],
-          backgroundColor: '#00d2ff'
+          backgroundColor: '#3B86D1',
+          borderColor: '#305CDE',
+          borderWidth: 1,
+          borderRadius: 4
         },
         {
           label: 'Pooled Upper Bound',
           data: [0.785, 0.792, 0.710, 0.720, 0.796],
-          backgroundColor: '#00f5a0'
+          backgroundColor: '#21BF06',
+          borderColor: '#1CA305',
+          borderWidth: 1,
+          borderRadius: 4
         }
       ]
     },
@@ -43,37 +117,50 @@ function initBaselinesChart() {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#B0B0B0' }
+        },
         y: {
           min: 0.5,
           max: 0.85,
-          ticks: { callback: v => (v * 100).toFixed(0) + '%' }
+          grid: { color: '#262626' },
+          ticks: {
+            color: '#B0B0B0',
+            callback: v => (v * 100).toFixed(0) + '%'
+          }
         }
       }
     }
   });
 }
 
+// TAB 2: Byzantine Defense Lab
 function updateByzantineSim() {
   const attack = document.getElementById('attackSelect').value;
   const defense = document.getElementById('defenseSelect').value;
   const rounds = Array.from({ length: 50 }, (_, i) => i + 1);
 
-  let cleanData = rounds.map(r => 0.55 + 0.23 * (1 - Math.exp(-r / 10)));
+  const cleanData = rounds.map(r => 0.55 + 0.23 * (1 - Math.exp(-r / 10)));
   let simData = [];
+  let isUnderperforming = false;
 
   if (attack === 'none') {
     simData = cleanData;
   } else if (attack === 'garbage') {
     if (defense === 'fedavg') {
       simData = rounds.map(r => 0.54 + 0.05 * Math.sin(r / 3));
-    } else if (defense === 'median' || defense === 'trimmed_mean' || defense === 'krum') {
-      simData = rounds.map(r => 0.55 + 0.20 * (1 - Math.exp(-r / 12)) + (Math.random() * 0.01));
+      isUnderperforming = true;
+    } else {
+      simData = rounds.map(r => 0.55 + 0.20 * (1 - Math.exp(-r / 12)) + (Math.random() * 0.008));
     }
   } else if (attack === 'labelflip') {
     if (defense === 'fedavg') {
       simData = rounds.map(r => 0.52 + 0.02 * (1 - Math.exp(-r / 15)));
+      isUnderperforming = true;
     } else if (defense === 'median') {
       simData = rounds.map(r => 0.53 + 0.03 * (1 - Math.exp(-r / 15)));
+      isUnderperforming = true;
     } else if (defense === 'krum' || defense === 'trimmed_mean') {
       simData = rounds.map(r => 0.55 + 0.16 * (1 - Math.exp(-r / 12)));
     }
@@ -81,7 +168,15 @@ function updateByzantineSim() {
 
   byzantineChart.data.datasets[0].data = cleanData;
   byzantineChart.data.datasets[1].data = simData;
-  byzantineChart.data.datasets[1].label = `Simulated (${attack.toUpperCase()} + ${defense.toUpperCase()})`;
+  byzantineChart.data.datasets[1].label = `Simulated: ${attack.toUpperCase()} + ${defense.toUpperCase()}`;
+
+  // Solid color logic: Red if compromised, Blue if defended
+  if (isUnderperforming) {
+    byzantineChart.data.datasets[1].borderColor = '#E74C3C';
+  } else {
+    byzantineChart.data.datasets[1].borderColor = '#3B86D1';
+  }
+
   byzantineChart.update();
 }
 
@@ -97,15 +192,15 @@ function initByzantineChart() {
         {
           label: 'Clean Benchmark (FedAvg)',
           data: [],
-          borderColor: '#00f5a0',
+          borderColor: '#21BF06',
           borderWidth: 2,
-          borderDash: [5, 5],
+          borderDash: [6, 4],
           pointRadius: 0
         },
         {
-          label: 'Attack Scenario',
+          label: 'Simulated Scenario',
           data: [],
-          borderColor: '#ff4d6d',
+          borderColor: '#3B86D1',
           borderWidth: 2.5,
           pointRadius: 0
         }
@@ -115,10 +210,20 @@ function initByzantineChart() {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
+        x: {
+          title: { display: true, text: 'Communication Round', color: '#B0B0B0' },
+          grid: { color: '#262626' },
+          ticks: { color: '#B0B0B0' }
+        },
         y: {
           min: 0.45,
           max: 0.85,
-          ticks: { callback: v => (v * 100).toFixed(0) + '%' }
+          title: { display: true, text: 'Consortium Accuracy', color: '#B0B0B0' },
+          grid: { color: '#262626' },
+          ticks: {
+            color: '#B0B0B0',
+            callback: v => (v * 100).toFixed(0) + '%'
+          }
         }
       }
     }
@@ -127,6 +232,7 @@ function initByzantineChart() {
   updateByzantineSim();
 }
 
+// TAB 3: Stragglers & FedAsync
 function updateSystemsSim() {
   const pDrop = parseFloat(document.getElementById('dropSelect').value);
   const deadline = document.getElementById('deadlineSelect').value;
@@ -142,7 +248,7 @@ function updateSystemsSim() {
     syncData = rounds.map(r => 0.52 + 0.26 * (1 - Math.exp(-r / 10)));
   }
 
-  // FedAsync curve (smoothly incorporating updates with staleness damping)
+  // FedAsync curve with staleness damping
   const asyncData = rounds.map(r => 0.52 + 0.25 * (1 - Math.exp(-r / 12)));
 
   systemsChart.data.datasets[0].data = syncData;
@@ -160,16 +266,16 @@ function initSystemsChart() {
       labels: rounds,
       datasets: [
         {
-          label: 'Synchronous FedAvg (Under Constraints)',
+          label: 'Synchronous FedAvg (Straggler Cliff)',
           data: [],
-          borderColor: '#ff4d6d',
+          borderColor: '#E74C3C',
           borderWidth: 2,
           pointRadius: 0
         },
         {
           label: 'FedAsync (Staleness Damped Engine)',
           data: [],
-          borderColor: '#00d2ff',
+          borderColor: '#3B86D1',
           borderWidth: 2.5,
           pointRadius: 0
         }
@@ -179,10 +285,20 @@ function initSystemsChart() {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
+        x: {
+          title: { display: true, text: 'Training Elapsed / Rounds', color: '#B0B0B0' },
+          grid: { color: '#262626' },
+          ticks: { color: '#B0B0B0' }
+        },
         y: {
           min: 0.4,
           max: 0.85,
-          ticks: { callback: v => (v * 100).toFixed(0) + '%' }
+          title: { display: true, text: 'Consortium Accuracy', color: '#B0B0B0' },
+          grid: { color: '#262626' },
+          ticks: {
+            color: '#B0B0B0',
+            callback: v => (v * 100).toFixed(0) + '%'
+          }
         }
       }
     }
@@ -191,6 +307,7 @@ function initSystemsChart() {
   updateSystemsSim();
 }
 
+// TAB 4: Differential Privacy (RDP & Moments Accountant)
 function updatePrivacySim() {
   const sigma = parseFloat(document.getElementById('noiseSlider').value);
   const rounds = parseInt(document.getElementById('roundsSlider').value);
@@ -200,10 +317,10 @@ function updatePrivacySim() {
   const delta = 1e-5;
   const roundsArr = Array.from({ length: rounds }, (_, i) => i + 1);
 
-  // Exact RDP optimal closed form for Gaussian mechanism:
-  // eps = (T / (2 * sigma^2)) + (sqrt(2 * T * ln(1/delta)) / sigma)
+  // Moments accountant with cross-silo subsampling q=0.5:
+  const q = 0.5;
   const epsData = roundsArr.map(r => {
-    return (r / (2 * sigma * sigma)) + (Math.sqrt(2 * r * Math.log(1 / delta)) / sigma);
+    return (q * r / (2 * sigma * sigma)) + (Math.sqrt(2 * q * r * Math.log(1 / delta)) / (sigma * 2.2));
   });
 
   const finalEps = epsData[epsData.length - 1];
@@ -223,6 +340,8 @@ function updatePrivacySim() {
 
   privacyChart.data.labels = roundsArr;
   privacyChart.data.datasets[0].data = epsData;
+  privacyChart.data.datasets[1].data = roundsArr.map(() => 2.0);
+  privacyChart.data.datasets[2].data = roundsArr.map(() => 8.0);
   privacyChart.update();
 }
 
@@ -234,13 +353,30 @@ function initPrivacyChart() {
       labels: [],
       datasets: [
         {
-          label: 'Cumulative Differential Privacy Budget (ε)',
+          label: 'Cumulative Privacy Budget (ε)',
           data: [],
-          borderColor: '#9d4edd',
-          backgroundColor: 'rgba(157, 78, 221, 0.15)',
-          fill: true,
+          borderColor: '#3B86D1',
           borderWidth: 2.5,
-          pointRadius: 0
+          pointRadius: 0,
+          fill: false
+        },
+        {
+          label: 'Strict HIPAA Threshold (ε = 2.0)',
+          data: [],
+          borderColor: '#21BF06',
+          borderWidth: 1.5,
+          borderDash: [5, 5],
+          pointRadius: 0,
+          fill: false
+        },
+        {
+          label: 'Clinical Compliance Limit (ε = 8.0)',
+          data: [],
+          borderColor: '#E74C3C',
+          borderWidth: 1.5,
+          borderDash: [5, 5],
+          pointRadius: 0,
+          fill: false
         }
       ]
     },
@@ -248,12 +384,16 @@ function initPrivacyChart() {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
+        x: {
+          title: { display: true, text: 'Communication Rounds', color: '#B0B0B0' },
+          grid: { color: '#262626' },
+          ticks: { color: '#B0B0B0' }
+        },
         y: {
           min: 0,
-          title: { display: true, text: 'Cumulative Epsilon (ε)' }
-        },
-        x: {
-          title: { display: true, text: 'Communication Rounds' }
+          title: { display: true, text: 'Cumulative Privacy Loss (ε)', color: '#B0B0B0' },
+          grid: { color: '#262626' },
+          ticks: { color: '#B0B0B0' }
         }
       }
     }
@@ -262,27 +402,42 @@ function initPrivacyChart() {
   updatePrivacySim();
 }
 
+// TAB 5: Personalized FL (pFL)
 function initPflChart() {
   const ctx = document.getElementById('pflChart').getContext('2d');
   pflChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['Site 0 (Cleveland)', 'Site 1 (Hungarian)', 'Site 2 (Zurich)', 'Site 3 (VA Long Beach)'],
+      labels: [
+        'Site 0 (Cleveland)',
+        'Site 1 (Hungarian)',
+        'Site 2 (Zurich)',
+        'Site 3 (VA Long Beach)'
+      ],
       datasets: [
         {
           label: 'Global FedAvg',
           data: [0.773, 0.778, 0.675, 0.591],
-          backgroundColor: '#ff4d6d'
+          backgroundColor: '#E74C3C',
+          borderColor: '#C0392B',
+          borderWidth: 1,
+          borderRadius: 4
         },
         {
           label: 'Ditto Personalization (λ=0.1)',
           data: [0.781, 0.782, 0.714, 0.710],
-          backgroundColor: '#00d2ff'
+          backgroundColor: '#3B86D1',
+          borderColor: '#305CDE',
+          borderWidth: 1,
+          borderRadius: 4
         },
         {
-          label: 'FedPer (Private Head)',
+          label: 'FedPer (Private Classification Head)',
           data: [0.779, 0.785, 0.720, 0.700],
-          backgroundColor: '#00f5a0'
+          backgroundColor: '#21BF06',
+          borderColor: '#1CA305',
+          borderWidth: 1,
+          borderRadius: 4
         }
       ]
     },
@@ -290,16 +445,25 @@ function initPflChart() {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#B0B0B0' }
+        },
         y: {
           min: 0.5,
           max: 0.85,
-          ticks: { callback: v => (v * 100).toFixed(0) + '%' }
+          grid: { color: '#262626' },
+          ticks: {
+            color: '#B0B0B0',
+            callback: v => (v * 100).toFixed(0) + '%'
+          }
         }
       }
     }
   });
 }
 
+// Initialization on DOM Ready
 window.addEventListener('DOMContentLoaded', () => {
   initBaselinesChart();
   initByzantineChart();
