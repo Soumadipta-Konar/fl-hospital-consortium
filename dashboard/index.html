@@ -2,13 +2,404 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hospital Consortium - Federated Learning Control Plane</title>
-  <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=20261022">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Inlined User-Specified Dark Theme Palette to Prevent Browser Cache */
+    :root {
+      --bg-base: #0A0A0A;
+      --bg-surface: #1E1E1E;
+      --bg-subtle: #141414;
+      --border-subtle: #2D2D2D;
+      --border-strong: #3D3D3D;
+
+      --text-primary: #E0E0E0;
+      --text-secondary: #B0B0B0;
+      --text-muted: #7E7E7E;
+
+      --brand-blue: #3B86D1;
+      --brand-blue-hover: #305CDE;
+      --success-green: #21BF06;
+      --alert-red: #E74C3C;
+
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-base) !important;
+      color: var(--text-primary) !important;
+      font-family: var(--font-family);
+      min-height: 100vh;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .dashboard-container {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 24px;
+    }
+
+    .logo-group h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary) !important;
+      background: none !important;
+      -webkit-text-fill-color: initial !important;
+      letter-spacing: -0.4px;
+    }
+
+    .logo-group p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #142014;
+      color: var(--success-green);
+      border: 1px solid var(--success-green);
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      box-shadow: none !important;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success-green);
+      border-radius: 50%;
+      box-shadow: none !important;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-surface) !important;
+      border: 1px solid var(--border-subtle) !important;
+      border-radius: 8px !important;
+      padding: 18px 20px;
+      backdrop-filter: none !important;
+      box-shadow: none !important;
+      transition: border-color 0.15s ease;
+    }
+
+    .kpi-card:hover {
+      border-color: var(--brand-blue) !important;
+    }
+
+    .kpi-title {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .kpi-value {
+      font-size: 1.85rem;
+      font-weight: 700;
+      margin: 6px 0 2px 0;
+      color: var(--text-primary);
+    }
+
+    .kpi-sub {
+      font-size: 0.8rem;
+      color: var(--brand-blue);
+    }
+
+    .kpi-sub.positive {
+      color: var(--success-green);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 12px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: var(--text-primary);
+      background: var(--bg-surface);
+      border-color: var(--border-subtle);
+    }
+
+    .tab-btn.active {
+      background: var(--brand-blue) !important;
+      color: #FFFFFF !important;
+      border-color: var(--brand-blue) !important;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block !important;
+    }
+
+    .main-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+      backdrop-filter: none !important;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card-desc {
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .control-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+      background: var(--bg-subtle);
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .form-select {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      color: var(--text-primary);
+      padding: 9px 12px;
+      border-radius: 4px;
+      font-size: 0.88rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .form-select:focus {
+      border-color: var(--brand-blue);
+    }
+
+    .form-range {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: var(--border-strong);
+      border-radius: 3px;
+      outline: none;
+      margin-top: 8px;
+    }
+
+    .form-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--brand-blue);
+      cursor: pointer;
+      border: 2px solid var(--bg-surface);
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 400px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .hospital-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .hospital-node {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      border-left: 4px solid var(--brand-blue);
+      border-radius: 6px;
+      padding: 16px;
+    }
+
+    .hospital-node.divergent {
+      border-left-color: var(--alert-red) !important;
+    }
+
+    .node-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .node-metric {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .node-metric span:last-child {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .metric-positive {
+      color: var(--success-green) !important;
+    }
+
+    .metric-negative {
+      color: var(--alert-red) !important;
+    }
+
+    .compliance-badge {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.86rem;
+      margin-top: 8px;
+    }
+
+    .compliance-badge.strict {
+      background: #142014;
+      color: var(--success-green);
+      border: 1px solid var(--success-green);
+    }
+
+    .compliance-badge.moderate {
+      background: #121E2C;
+      color: var(--brand-blue);
+      border: 1px solid var(--brand-blue);
+    }
+
+    .compliance-badge.non-compliant {
+      background: #251414;
+      color: var(--alert-red);
+      border: 1px solid var(--alert-red);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    .gallery-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .gallery-card img {
+      width: 100%;
+      height: 260px;
+      object-fit: contain;
+      background: #0D0D0D;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px;
+    }
+
+    .gallery-body {
+      padding: 14px 16px;
+    }
+
+    .gallery-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .gallery-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+  </style>
 </head>
 <body>
   <div class="dashboard-container">
@@ -28,17 +419,17 @@
       <div class="kpi-card">
         <div class="kpi-title">Consortium Model Accuracy</div>
         <div class="kpi-value" id="kpi-acc">78.2%</div>
-        <div class="kpi-sub">+1.2% over local hospital models</div>
+        <div class="kpi-sub positive">+1.2% over local hospital models</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-title">Total Clinical Cohort</div>
         <div class="kpi-value">740</div>
-        <div class="kpi-sub">Cleveland, Hungarian, Swiss, VA</div>
+        <div class="kpi-sub">Cleveland, Hungarian, Zurich, VA</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-title">Byzantine Resilience</div>
         <div class="kpi-value" id="kpi-defense">Krum / Median</div>
-        <div class="kpi-sub">Active defense layer engaged</div>
+        <div class="kpi-sub">Robust defense aggregators enabled</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-title">Privacy Guarantee</div>
@@ -49,18 +440,22 @@
 
     <!-- Navigation Tabs -->
     <nav class="nav-tabs">
-      <button class="tab-btn active" onclick="switchTab('tab-baselines')">Consortium Baselines</button>
-      <button class="tab-btn" onclick="switchTab('tab-byzantine')">Byzantine Defense Lab</button>
-      <button class="tab-btn" onclick="switchTab('tab-systems')">Stragglers & FedAsync</button>
-      <button class="tab-btn" onclick="switchTab('tab-privacy')">Differential Privacy</button>
-      <button class="tab-btn" onclick="switchTab('tab-pfl')">Personalized FL (pFL)</button>
+      <button class="tab-btn active" onclick="switchTab('tab-baselines', this)">Consortium Baselines</button>
+      <button class="tab-btn" onclick="switchTab('tab-byzantine', this)">Byzantine Defense Lab</button>
+      <button class="tab-btn" onclick="switchTab('tab-systems', this)">Stragglers & FedAsync</button>
+      <button class="tab-btn" onclick="switchTab('tab-privacy', this)">Differential Privacy</button>
+      <button class="tab-btn" onclick="switchTab('tab-pfl', this)">Personalized FL (pFL)</button>
+      <button class="tab-btn" onclick="switchTab('tab-plots', this)">Research Figures</button>
     </nav>
 
     <!-- TAB 1: BASELINES -->
     <div id="tab-baselines" class="tab-content active">
       <div class="main-card">
         <div class="card-header">
-          <div class="card-title">Hospital Performance: Local vs Federated vs Pooled</div>
+          <div>
+            <div class="card-title">Hospital Performance: Local vs Federated vs Pooled</div>
+            <div class="card-desc">Comparative analysis of local-only models, federated FedAvg, and centralized pooled upper bounds across all 4 clinical sites.</div>
+          </div>
         </div>
         <div class="chart-container">
           <canvas id="baselinesChart"></canvas>
@@ -70,25 +465,25 @@
             <div class="node-title">Site 0: Cleveland Clinic</div>
             <div class="node-metric"><span>Cohort:</span> <span>153 patients</span></div>
             <div class="node-metric"><span>Local Acc:</span> <span>75.0%</span></div>
-            <div class="node-metric"><span>FedAvg Acc:</span> <span style="color:var(--accent-emerald);">77.3% (+2.3%)</span></div>
+            <div class="node-metric"><span>FedAvg Acc:</span> <span class="metric-positive">77.3% (+2.3%)</span></div>
           </div>
           <div class="hospital-node">
             <div class="node-title">Site 1: Hungarian Institute</div>
             <div class="node-metric"><span>Cohort:</span> <span>147 patients</span></div>
             <div class="node-metric"><span>Local Acc:</span> <span>75.2%</span></div>
-            <div class="node-metric"><span>FedAvg Acc:</span> <span style="color:var(--accent-emerald);">77.8% (+2.6%)</span></div>
+            <div class="node-metric"><span>FedAvg Acc:</span> <span class="metric-positive">77.8% (+2.6%)</span></div>
           </div>
           <div class="hospital-node">
             <div class="node-title">Site 2: Univ. Hospital Zurich</div>
             <div class="node-metric"><span>Cohort:</span> <span>42 patients</span></div>
             <div class="node-metric"><span>Local Acc:</span> <span>64.7%</span></div>
-            <div class="node-metric"><span>FedAvg Acc:</span> <span style="color:var(--accent-emerald);">67.5% (+2.8%)</span></div>
+            <div class="node-metric"><span>FedAvg Acc:</span> <span class="metric-positive">67.5% (+2.8%)</span></div>
           </div>
-          <div class="hospital-node">
+          <div class="hospital-node divergent">
             <div class="node-title">Site 3: VA Medical Center</div>
             <div class="node-metric"><span>Cohort:</span> <span>100 patients</span></div>
             <div class="node-metric"><span>Local Acc:</span> <span>70.0%</span></div>
-            <div class="node-metric"><span>FedAvg Acc:</span> <span style="color:var(--accent-rose);">59.1% (Domain Shift)</span></div>
+            <div class="node-metric"><span>FedAvg Acc:</span> <span class="metric-negative">59.1% (Domain Shift)</span></div>
           </div>
         </div>
       </div>
@@ -98,7 +493,10 @@
     <div id="tab-byzantine" class="tab-content">
       <div class="main-card">
         <div class="card-header">
-          <div class="card-title">Byzantine Adversarial Attack & Robust Aggregator Simulator</div>
+          <div>
+            <div class="card-title">Byzantine Adversarial Attack & Robust Aggregator Simulator</div>
+            <div class="card-desc">Simulate Gaussian garbage updates and label flipping to evaluate robust aggregation defenses (Krum, Coordinate-wise Median, Trimmed Mean).</div>
+          </div>
         </div>
         <div class="control-panel">
           <div class="form-group">
@@ -129,7 +527,10 @@
     <div id="tab-systems" class="tab-content">
       <div class="main-card">
         <div class="card-header">
-          <div class="card-title">Straggler Cliff vs Asynchronous FedAsync Optimization</div>
+          <div>
+            <div class="card-title">Straggler Cliff vs Asynchronous FedAsync Optimization</div>
+            <div class="card-desc">Analyze the straggler cliff in synchronous FL caused by dropped clients and tight deadlines, and observe how FedAsync mitigates latency with staleness-damped updates.</div>
+          </div>
         </div>
         <div class="control-panel">
           <div class="form-group">
@@ -159,12 +560,15 @@
     <div id="tab-privacy" class="tab-content">
       <div class="main-card">
         <div class="card-header">
-          <div class="card-title">Differential Privacy (RDP & Moments Accountant)</div>
+          <div>
+            <div class="card-title">Differential Privacy (RDP & Moments Accountant)</div>
+            <div class="card-desc">Calculate privacy loss (&epsilon;) under Gaussian mechanism with &delta; = 10⁻⁵. Monitor clinical compliance against strict HIPAA and standard regulatory boundaries.</div>
+          </div>
         </div>
         <div class="control-panel">
           <div class="form-group">
-            <label class="form-label">Gaussian Noise Multiplier (&sigma;): <span id="noiseVal">1.0</span></label>
-            <input type="range" id="noiseSlider" class="form-range" min="0.2" max="3.0" step="0.1" value="1.0" oninput="updatePrivacySim()">
+            <label class="form-label">Gaussian Noise Multiplier (&sigma;): <span id="noiseVal">1.5</span></label>
+            <input type="range" id="noiseSlider" class="form-range" min="0.5" max="3.0" step="0.1" value="1.5" oninput="updatePrivacySim()">
           </div>
           <div class="form-group">
             <label class="form-label">Communication Rounds: <span id="roundsVal">50</span></label>
@@ -172,7 +576,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Clinical Compliance Certification</label>
-            <div id="complianceBadge" class="compliance-badge strict">HIPAA Compliant (&epsilon; = 2.45)</div>
+            <div id="complianceBadge" class="compliance-badge strict">Strict HIPAA / GDPR Guarantee (&epsilon; = 2.45)</div>
           </div>
         </div>
         <div class="chart-container">
@@ -185,15 +589,102 @@
     <div id="tab-pfl" class="tab-content">
       <div class="main-card">
         <div class="card-header">
-          <div class="card-title">Personalized FL: Ditto vs FedPer vs Global FedAvg on Site 3</div>
+          <div>
+            <div class="card-title">Personalized FL: Ditto vs FedPer vs Global FedAvg on Site 3</div>
+            <div class="card-desc">Address domain shift on Site 3 (VA Medical Center). Compare bi-level personalized Ditto and feature-split FedPer against standard Global FedAvg.</div>
+          </div>
         </div>
         <div class="chart-container">
           <canvas id="pflChart"></canvas>
         </div>
       </div>
     </div>
+
+    <!-- TAB 6: RESEARCH FIGURES -->
+    <div id="tab-plots" class="tab-content">
+      <div class="main-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Empirical Research Figures & Publication Plots</div>
+            <div class="card-desc">High-resolution publication figures generated from experimental trials (results/e1.csv through results/e7.csv).</div>
+          </div>
+        </div>
+        <div class="gallery-grid">
+          <div class="gallery-card">
+            <img src="plots/hospital_baselines.png" alt="Hospital Baselines">
+            <div class="gallery-body">
+              <div class="gallery-title">Hospital Baselines Comparison</div>
+              <div class="gallery-desc">Local-only vs FedAvg vs Pooled model performance across individual sites.</div>
+            </div>
+          </div>
+          <div class="gallery-card">
+            <img src="plots/consortium_convergence.png" alt="Consortium Convergence">
+            <div class="gallery-body">
+              <div class="gallery-title">Consortium Convergence Dynamics</div>
+              <div class="gallery-desc">Training trajectory of cross-silo aggregation over 50 rounds.</div>
+            </div>
+          </div>
+          <div class="gallery-card">
+            <img src="plots/byzantine_attacks_and_defense.png" alt="Byzantine Defense">
+            <div class="gallery-body">
+              <div class="gallery-title">Byzantine Attack & Defense</div>
+              <div class="gallery-desc">FedAvg degradation under label flipping vs Coordinate-wise Median and Krum recovery.</div>
+            </div>
+          </div>
+          <div class="gallery-card">
+            <img src="plots/straggler_deadlines_convergence.png" alt="Straggler Convergence">
+            <div class="gallery-body">
+              <div class="gallery-title">Straggler Cliff Convergence</div>
+              <div class="gallery-desc">Synchronous deadline dropouts collapsing accuracy vs FedAsync staleness compensation.</div>
+            </div>
+          </div>
+          <div class="gallery-card">
+            <img src="plots/straggler_deadlines_wallclock.png" alt="Straggler Wallclock">
+            <div class="gallery-body">
+              <div class="gallery-title">Wall-Clock Systems Latency</div>
+              <div class="gallery-desc">Time elapsed per round with heterogeneity, network latency, and client dropout.</div>
+            </div>
+          </div>
+          <div class="gallery-card">
+            <img src="plots/client_dropout_resilience.png" alt="Dropout Resilience">
+            <div class="gallery-body">
+              <div class="gallery-title">Client Dropout Resilience</div>
+              <div class="gallery-desc">Consortium stability across 0%, 20%, and 50% hospital client dropout rates.</div>
+            </div>
+          </div>
+          <div class="gallery-card">
+            <img src="plots/differential_privacy_tradeoff.png" alt="Privacy Utility Tradeoff">
+            <div class="gallery-body">
+              <div class="gallery-title">Privacy-Utility Tradeoff</div>
+              <div class="gallery-desc">Consortium accuracy as a function of Gaussian noise multiplier &sigma; and privacy budget &epsilon;.</div>
+            </div>
+          </div>
+          <div class="gallery-card">
+            <img src="plots/leave_one_out_generalization.png" alt="Leave-One-Out">
+            <div class="gallery-body">
+              <div class="gallery-title">Leave-One-Out Generalization</div>
+              <div class="gallery-desc">Out-of-domain evaluation testing consortium generalization to unseen hospitals.</div>
+            </div>
+          </div>
+          <div class="gallery-card">
+            <img src="plots/hospital_contribution_matrix.png" alt="Hospital Matrix">
+            <div class="gallery-body">
+              <div class="gallery-title">Contribution Matrix</div>
+              <div class="gallery-desc">Cross-hospital pairwise validation matrix revealing covariate shift and domain compatibility.</div>
+            </div>
+          </div>
+          <div class="gallery-card">
+            <img src="plots/site_sizes.png" alt="Site Sizes">
+            <div class="gallery-body">
+              <div class="gallery-title">Site Sample Distributions</div>
+              <div class="gallery-desc">Cohort size imbalance across Cleveland (153), Hungarian (147), Zurich (42), and VA (100).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=20261022"></script>
 </body>
 </html>
