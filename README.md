@@ -12,6 +12,12 @@
   <a href="https://github.com/Soumadipta-Konar/fl-hospital-consortium/actions/workflows/ci.yml"><img src="https://github.com/Soumadipta-Konar/fl-hospital-consortium/actions/workflows/ci.yml/badge.svg" alt="CI Pipeline"></a>
 </p>
 
+<p align="center">
+  <video src="dashboard_demo_README.mp4" controls autoplay loop muted playsinline width="100%" onloadedmetadata="this.playbackRate = 2.0;" style="border-radius: 8px; border: 1px solid #2D2D2D;"></video>
+  <br>
+  <em>Interactive control plane benchmarking simulator (running in 2x playback). <a href="https://soumadipta-konar.github.io/fl-hospital-consortium/"><b>🚀 Launch Live Dashboard on GitHub Pages</b></a></em>
+</p>
+
 > [!IMPORTANT]
 > **Research and Educational Simulation Only:** This repository is an empirical research and learning simulation of cross-silo federated optimization, differential privacy, and Byzantine robustness. It is not a clinical decision-support system and must not be used for medical diagnosis.
 
@@ -23,7 +29,7 @@
 - [Interactive Control Plane & Deployed Tools](#interactive-control-plane--deployed-tools)
   - [Live Deployed Dashboard](#live-deployed-dashboard)
   - [Local Dashboard Runner](#local-dashboard-runner)
-  - [Interactive Dashboard Video Demo (2x Speed)](#interactive-dashboard-video-demo-2x-speed)
+  - [Live Simulator Access](#live-simulator-access)
 - [Clinical Dataset: Fed-Heart-Disease](#clinical-dataset-fed-heart-disease)
   - [Consortium Centers & Partitions](#consortium-centers--partitions)
   - [Clinical Feature Schema](#clinical-feature-schema)
@@ -111,13 +117,10 @@ python dashboard.py
 python dashboard.py --port 8080 --no-browser
 ```
 
-### Interactive Dashboard Video Demo 
+### Live Simulator Access
 
-<p align="center">
-  <video src="dashboard_demo_README.mp4" controls autoplay loop muted playsinline width="100%" onloadedmetadata="this.playbackRate = 2.0;" style="border-radius: 8px; border: 1px solid #2D2D2D;"></video>
-  <br>
-  <em>Interactive control plane benchmarking simulator (running in 2x playback). Click <a href="https://soumadipta-konar.github.io/fl-hospital-consortium/">here</a> to open the live deployed dashboard.</em>
-</p>
+The interactive control plane runs live on GitHub Pages with zero installation required:
+👉 **[https://soumadipta-konar.github.io/fl-hospital-consortium/](https://soumadipta-konar.github.io/fl-hospital-consortium/)**
 
 ---
 
