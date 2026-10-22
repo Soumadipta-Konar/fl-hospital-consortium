@@ -329,13 +329,13 @@ function updatePrivacySim() {
 
   if (finalEps <= 2.0) {
     badge.className = 'compliance-badge strict';
-    badge.innerText = `Strict HIPAA / GDPR Guarantee (ε = ${finalEps.toFixed(2)})`;
+    badge.innerText = `Strict Academic Bound (ε = ${finalEps.toFixed(2)})`;
   } else if (finalEps <= 8.0) {
     badge.className = 'compliance-badge moderate';
-    badge.innerText = `Standard Clinical Compliance (ε = ${finalEps.toFixed(2)})`;
+    badge.innerText = `Moderate DP Benchmark (ε = ${finalEps.toFixed(2)})`;
   } else {
     badge.className = 'compliance-badge non-compliant';
-    badge.innerText = `Relaxed / Non-Compliant (ε = ${finalEps.toFixed(2)})`;
+    badge.innerText = `Relaxed / Low Guarantee (ε = ${finalEps.toFixed(2)})`;
   }
 
   privacyChart.data.labels = roundsArr;
@@ -361,7 +361,7 @@ function initPrivacyChart() {
           fill: false
         },
         {
-          label: 'Strict HIPAA Threshold (ε = 2.0)',
+          label: 'Strict Academic Target (ε = 2.0)',
           data: [],
           borderColor: '#21BF06',
           borderWidth: 1.5,
@@ -370,7 +370,7 @@ function initPrivacyChart() {
           fill: false
         },
         {
-          label: 'Clinical Compliance Limit (ε = 8.0)',
+          label: 'Moderate DP Threshold (ε = 8.0)',
           data: [],
           borderColor: '#E74C3C',
           borderWidth: 1.5,

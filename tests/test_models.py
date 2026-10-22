@@ -26,3 +26,29 @@ def test_evaluation_functions():
 
     raw_acc = compute_accuracy(y, model(x))
     assert 0.0 <= raw_acc <= 1.0
+
+def test_compute_bootstrap_ci():
+    from src.models import compute_bootstrap_ci
+    import numpy as np
+
+    # Synthetic small cohort (e.g., Switzerland N=16)
+    y_true = np.array([1] * 15 + [0], dtype=np.uint8)
+    y_pred = np.array([0.9] * 15 + [0.1], dtype=np.float32)  # 100% correct
+
+    res = compute_bootstrap_ci(y_true, y_pred, n_bootstraps=500, ci=0.95, seed=42)
+    assert res["n_samples"] == 16
+    assert res["mean"] == 1.0
+    assert res["ci_lower"] <= res["mean"] <= res["ci_upper"]
+
+    # Imbalanced cohort with errors (e.g., VA N=45)
+    y_true_va = np.array([1] * 35 + [0] * 10)
+    y_pred_va = np.array([0.8] * 25 + [0.2] * 10 + [0.8] * 5 + [0.2] * 5)
+    res_va = compute_bootstrap_ci(y_true_va, y_pred_va, n_bootstraps=500, ci=0.95, seed=42)
+    assert res_va["n_samples"] == 45
+    assert 0.0 <= res_va["ci_lower"] <= res_va["mean"] <= res_va["ci_upper"] <= 1.0
+    assert res_va["std_error"] > 0.0
+
+    # Determinism
+    res_repeat = compute_bootstrap_ci(y_true_va, y_pred_va, n_bootstraps=500, ci=0.95, seed=42)
+    assert res_va["ci_lower"] == res_repeat["ci_lower"]
+    assert res_va["ci_upper"] == res_repeat["ci_upper"]

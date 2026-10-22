@@ -126,13 +126,20 @@ def validate_clinical_privacy(
     epsilon: float,
     threshold: float = 10.0,
 ) -> Dict[str, Any]:
-    """Evaluates whether the achieved epsilon satisfies clinical privacy guidelines (e.g., HIPAA / GDPR).
+    """Evaluates whether the achieved epsilon satisfies academic differential privacy tiers.
 
-    Tiers:
-      - Strict (eps <= 2.0): High confidentiality, minimal reconstruction risk.
-      - Moderate (2.0 < eps <= 8.0): Standard commercial / clinical privacy threshold.
+    NOTE ON REGULATORY COMPLIANCE:
+    The HIPAA Privacy Rule (45 CFR § 164.514) establishes standards for de-identification via
+    either Safe Harbor (removal of 18 specific identifiers) or Expert Determination of very small
+    re-identification risk. HIPAA does NOT specify any numerical differential privacy epsilon threshold.
+    The epsilon tiers below represent academic benchmark thresholds commonly used in FL literature
+    to contextualize privacy-utility trade-offs.
+
+    Academic Tiers:
+      - Strict (eps <= 2.0): High theoretical confidentiality, minimal reconstruction risk.
+      - Moderate (2.0 < eps <= 8.0): Common benchmark in federated learning literature.
       - Relaxed (8.0 < eps <= 15.0): Modest differential privacy guarantees.
-      - Non-compliant (eps > 15.0 or inf): Insufficient privacy protection.
+      - Non-compliant (eps > 15.0 or inf): Insufficient theoretical privacy guarantee.
     """
     if math.isinf(epsilon) or epsilon > 15.0:
         tier = "non-compliant"
@@ -152,5 +159,5 @@ def validate_clinical_privacy(
         "threshold": threshold,
         "compliant": compliant,
         "tier": tier,
-        "standard": "HIPAA / GDPR Differential Privacy Guidance",
+        "standard": "Academic Differential Privacy Benchmark Tiers (Note: HIPAA does not define numerical epsilon)",
     }

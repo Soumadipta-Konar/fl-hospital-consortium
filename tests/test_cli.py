@@ -51,3 +51,13 @@ def test_cli_plots():
     )
     assert result.returncode == 0
     assert "[OK] Figures generated in plots/" in result.stdout
+
+
+def test_cli_flower():
+    result = subprocess.run(
+        [sys.executable, "run_experiments.py", "--stage", "flower"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "Stage 5: Multi-Process Flower Deployment Parity" in result.stdout

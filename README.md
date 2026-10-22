@@ -1,5 +1,5 @@
 <h1 align="center">fl-hospital-consortium</h1>
-<p align="center"><i>A production-grade, cross-silo federated learning simulator across a natural consortium of four clinical hospital centers using FLamby and Flower.</i></p>
+<p align="center"><i>A modular, cross-silo federated learning research and benchmarking testbed across a natural consortium of four clinical hospital centers using FLamby and Flower.</i></p>
 
 <p align="center">
   <a href="https://soumadipta-konar.github.io/fl-hospital-consortium/"><img src="https://img.shields.io/badge/Live%20Dashboard-GitHub%20Pages-3B86D1?style=for-the-badge&logo=githubpages&logoColor=white" alt="Live Dashboard"></a>
@@ -45,7 +45,9 @@
   - [Available Stages & Options](#available-stages--options)
   - [CLI Usage Examples](#cli-usage-examples)
 - [Empirical Results & Research Answers](#empirical-results--research-answers)
+  - [Limitations & Statistical Rigor](#limitations--statistical-rigor)
   - [Summary of Results (10 Random Seeds)](#summary-of-results-10-random-seeds)
+  - [Hyperparameter Ablations: mu and Learning Rate](#hyperparameter-ablations-mu-and-learning-rate)
   - [RQ1: Who Benefits from Federation?](#rq1-who-benefits-from-federation)
   - [RQ2: Generalization to an Unseen Hospital (LOSO)](#rq2-generalization-to-an-unseen-hospital-loso)
   - [RQ3: Pairwise Hospital Contribution Matrix](#rq3-pairwise-hospital-contribution-matrix)
@@ -93,7 +95,7 @@ The repository includes a zero-dependency, client-side web application serving a
 │  Cross-Silo FL Hospital Consortium - Interactive Control Plane         │
 ├─────────────┬─────────────┬─────────────────────┬──────────────────────┤
 │ Accuracy    │ Cohort      │ Byzantine Defense   │ Privacy Guarantee    │
-│ 78.2%       │ 740         │ Krum / Median       │ ε = 2.45 (HIPAA)     │
+│ 78.2%       │ 740         │ Krum / Median       │ ε = 2.45 (DP Bound)  │
 ├─────────────┴─────────────┴─────────────────────┴──────────────────────┤
 │ [Baselines] [Byzantine Lab] [Stragglers] [Differential Privacy] [pFL]  │
 └────────────────────────────────────────────────────────────────────────┘
@@ -103,9 +105,9 @@ The repository includes a zero-dependency, client-side web application serving a
 - **Tab 1: Consortium Baselines:** Comparative bar chart of Local-Only vs. FedAvg vs. Pooled upper bounds across all 4 hospital sites.
 - **Tab 2: Byzantine Defense Lab:** Interactive adversarial attacks (Gaussian noise, label flipping) against robust defense aggregators (Krum $f=1$, Coordinate-wise Median, Trimmed Mean $\beta=1$).
 - **Tab 3: Stragglers & FedAsync:** Interactive client dropouts ($p_{\text{drop}}$) and round timeout deadlines showing the Straggler Cliff vs. asynchronous staleness-damped optimization.
-- **Tab 4: Differential Privacy Accountant:** Interactive moments accountant with sliders for noise multiplier ($\sigma$) and rounds, evaluating strict HIPAA ($\epsilon \le 2.0$) and regulatory boundaries.
+- **Tab 4: Differential Privacy Accountant:** Interactive moments accountant with sliders for noise multiplier ($\sigma$) and rounds, evaluating academic differential privacy boundaries ($\epsilon \le 2.0$) and RDP curves.
 - **Tab 5: Personalized FL (pFL):** Evaluates Ditto ($\lambda=0.1$) and FedPer against global FedAvg on out-of-distribution clients (Site 3 VA).
-- **Tab 6: Research Figures Gallery:** High-resolution empirical figures directly generated from experimental trials.
+- **Tab 6: Research Figures Gallery:** High-resolution empirical figures directly generated from experimental trials (11 figures in total).
 
 ### Local Dashboard Runner
 
@@ -279,11 +281,11 @@ Privacy parameters $(\epsilon, \delta)$ are tracked across communication rounds 
   $$w_{t+1, d} = \text{median}_{k \in S_t}\left(w_{t+1, d}^k\right)$$
 - **Trimmed Mean ($\beta$):** Removes the $\beta$ largest and smallest values along each coordinate before computing the mean.
 - **Krum Selection ($f$):** Selects the single client vector $w_i$ minimizing the sum of Euclidean distances to its $n - f - 2$ closest peers:
-  $$i^* = \arg\min_i \sum_{j \in \mathcal{N}_i} \|w_i - w_j\|_2^2$$
+  $$i^\star = \arg\min_i \sum_{j \in \mathcal{N}_i} \|w_i - w_j\|_2^2$$
 
 #### 6. Personalized Federated Learning (pFL)
 - **Ditto:** Solves a bi-level objective trading off local accuracy and closeness to global weights:
-  $$\min_{v_k} \mathcal{L}_k(v_k) + \frac{\lambda}{2} \|v_k - w^*\|_2^2$$
+  $$\min_{v_k} \mathcal{L}_k(v_k) + \frac{\lambda}{2} \|v_k - w^\star\|_2^2$$
 - **FedPer:** Splits the network into base shared representation layers $w_{\text{base}}$ (federated) and private classification heads $w_{\text{head}}^k$ (retained locally).
 
 ---
@@ -307,11 +309,13 @@ python run_experiments.py --stage <STAGE> [OPTIONS]
 | **`loso`** | Leave-One-Site-Out cross-validation across held-out centers | `results/e2.csv` |
 | **`contribution`** | Evaluates the pairwise marginal impact matrix of each hospital | `results/e3.csv` |
 | **`system`** | Simulates dropouts ($p_{\text{drop}} \in \{0, 0.2, 0.5\}$) and straggler deadlines ($D \in \{1.0\text{s}, 2.0\text{s}, \infty\}$) | `results/e4.csv` |
+| **`flower`** | Multi-process container deployment parity check against Flower reference | `results/e5.csv` |
 | **`privacy`** | Evaluates DP noise sweeps and Byzantine attacks under FedAvg, Median, Trimmed Mean, Krum | `results/e6.csv` |
 | **`pfl`** | Executes Personalized FL: Ditto ($\lambda=0.1$), FedPer, and local fine-tuning | `results/e7.csv` |
 | **`async`** | Executes Asynchronous FL (FedAsync) with polynomial and hinge staleness damping | `results/e8.csv` |
 | **`budget`** | Calculates RDP cumulative $(\epsilon, \delta)$ privacy budget curves | `results/privacy_budget.csv` |
-| **`plots`** | Reads existing `results/*.csv` and regenerates all 10 publication figures | `plots/*.png` |
+| **`ablation`** | Executes FedProx $\mu \in [0.0, 20.0]$ and learning rate $\eta \in [10^{-4}, 10^{-1}]$ sweeps | `results/ablation.csv` |
+| **`plots`** | Reads existing `results/*.csv` and regenerates publication figures | `plots/*.png` (11 figures) |
 | **`all`** | Sequentially executes the full suite from end-to-end | All results and plots |
 
 #### Global CLI Flags
@@ -335,7 +339,10 @@ python run_experiments.py --stage privacy --rounds 50
 # 4. Evaluate Personalized FL for out-of-distribution Site 3
 python run_experiments.py --stage pfl --rounds 50
 
-# 5. Regenerate all 10 publication figures without retraining
+# 5. Run learning-rate and proximal mu hyperparameter ablations
+python run_experiments.py --stage ablation --rounds 10 --seeds 42
+
+# 6. Regenerate all publication figures without retraining
 python run_experiments.py --stage plots
 ```
 
@@ -343,17 +350,95 @@ python run_experiments.py --stage plots
 
 ## Empirical Results & Research Answers
 
+### Limitations & Statistical Rigor
+
+Before analyzing consortium benchmarks, several critical statistical, optimization, and system considerations must be established:
+
+#### 1. Small Sample Sizes & Test-Set Sampling Noise
+- **Evaluation Cohort Sizes:** The test splits across the four hospital centers comprise small patient sample sizes:
+  - **Site 0 (Cleveland):** $N = 104$ test patients
+  - **Site 1 (Hungarian):** $N = 89$ test patients
+  - **Site 2 (Switzerland):** $N = 16$ test patients ($15$ positive, $1$ negative; $93.8\%$ disease prevalence)
+  - **Site 3 (VA Long Beach):** $N = 45$ test patients ($35$ positive, $10$ negative; $77.8\%$ disease prevalence)
+  - **Consortium Pooled Test:** $N = 254$ test patients
+- **Sampling Noise vs. Seed Variance:** Reporting standard deviations across random seeds (e.g., $\pm 0.012$) reflects only optimizer trajectory stochasticity on a *fixed* test split. It does not measure test-set sampling uncertainty. Grounding percentage gains in absolute patient counts highlights this:
+  - On **Site 3 (VA Long Beach, $N=45$)**, the observed $+8.89\%$ accuracy gain when Hungarian data is removed corresponds to exactly **4 patients** ($45 \times 0.0889 = 4.0$).
+  - On **Site 0 (Cleveland, $N=104$)**, the $+2.3\%$ gain under FedAvg corresponds to **$2.4$ patients** ($k=80$ vs. $k=78$).
+  - On **Site 1 (Hungarian, $N=89$)**, the $+2.6\%$ gain under FedAvg corresponds to **$2.3$ patients** ($k=69$ vs. $k=67$).
+  - On **Site 2 (Switzerland, $N=16$)**, each patient represents $6.25\%$ of the test set; a $\pm 5.0\%$ shift represents less than **$1$ patient**.
+- **Bootstrap Confidence Intervals:** When evaluated using non-parametric percentile bootstrap resampling ($B=1,000$, $95\%$ CI), the confidence intervals for Local-Only, FedAvg, and Pooled models substantially overlap across all four individual sites. Consequently, claims of "statistically significant clinical negative transfer" are ungrounded; observed differences represent empirical directional trends rather than proven clinical divergence.
+
+#### 2. Optimization Dynamics, Learning Rates & FedProx $\mu$ Equivalence
+- **Local Underfitting on Switzerland (Zurich):** Switzerland's local training split contains only 30 patients, 100% of whom are positive ($y=1$). A fully converged logistic regression model should learn a large positive intercept, predicting positive for all inputs and achieving the $93.8\%$ (15/16) majority-class baseline. However, under default parameters ($\eta=0.001$, batch size $4$, 50 rounds), local training scores $0.775 \pm 0.148$. As demonstrated in our learning rate sweep, increasing $\eta$ to $0.01$ reaches $0.9375$ ($15/16$ correct) immediately. Thus, local underperformance on small skewed sites is partly attributable to underfitting under conservative learning rates.
+- **FedAvg vs. FedProx ($\mu=0.01$) Equivalence on 14 Parameters:** In the benchmark results, FedAvg and FedProx ($\mu=0.01$) match to three decimal places across all sites. On a strongly convex linear model with 13 features ($14$ parameters), with $E=1$ local epoch and $\eta=0.001$, the parameter drift $\|w - w_t\|_2$ within one local epoch is on the order of $\approx 10^{-3}$. The proximal gradient penalty $\mu (w - w_t)$ with $\mu=0.01$ exerts a force of $\approx 10^{-5}$, which is 3 to 4 orders of magnitude below the data loss gradient ($\approx 10^{-2}$). Our empirical $\mu$ ablation ($\mu \in [0.0, 20.0]$) confirms that $\mu$ has negligible effect until $\mu \ge 0.5$, and at $\mu \ge 5.0$ degrades performance through over-regularization.
+
+#### 3. Cross-Silo Differential Privacy & Regulatory Standards
+- **No Subsampling Amplification in 4-Silo Consortia:** In cross-device FL with large populations, client subsampling ($q = K/N \ll 1$) provides privacy amplification by subsampling. In a 4-hospital cross-silo setting where all $K=4$ hospitals participate in every round, $q = 4/4 = 1.0$. Hence, there is **zero subsampling amplification**.
+- **Noise Multipliers & Privacy Spend:** Injecting Gaussian noise with multiplier $z \in [0.0, 0.3]$ over 50 rounds yields large theoretical $\epsilon$ ($\epsilon \gg 10$). The small accuracy fluctuation from $0.782$ to $0.785$ is random stochastic noise within the bootstrap margin of error, not an empirical improvement. The DP results should be understood as an illustrative pedagogical stress-test of noise tolerance in low-dimensional convex models, rather than formal cryptographic isolation.
+- **Regulatory Clarification (HIPAA):** The HIPAA Privacy Rule (45 CFR § 164.514) establishes standards for de-identification via Safe Harbor (removal of 18 explicit identifiers) or Expert Determination of very small re-identification risk. HIPAA does **not** define any numerical differential privacy epsilon threshold ($\epsilon$). Thresholds such as $\epsilon \le 2.0$ are academic literature conventions, not statutory standards.
+
+#### 4. Byzantine Fault Tolerance Preconditions (Krum vs. Median)
+- **Krum Precondition Violation:** Theorem 1 of Blanchard et al. (NeurIPS 2017) proves Byzantine resilience for Krum if and only if:
+  $$n \ge 2f + 3$$
+  For $f=1$ adversary, Krum strictly requires at least $n = 2(1) + 3 = 5$ participating nodes. In a 4-hospital consortium ($n=4$), this precondition is formally violated ($4 < 5$).
+- **Validity of Coordinate-Wise Median and Trimmed Mean:** In contrast, Coordinate-wise Median and Trimmed Mean require:
+  $$n \ge 2f + 1$$
+  For $f=1$, this requires $n \ge 3$, which is fully satisfied by our 4-node consortium ($4 \ge 3$).
+- **Realistic Defense Recovery:** Rather than "completely neutralizing" attacks, robust aggregators partially mitigate poisoning: under random Gaussian garbage updates, Coordinate-wise Median recovers consortium accuracy to $0.744 \pm 0.055$ (against the clean baseline of $0.782 \pm 0.010$), preventing divergence while remaining within standard empirical error bounds.
+
+#### 5. Straggler Deadline Cliff as a Synthetic Latency Artifact
+- The sharp drop to $0.437$ test accuracy at a 1.0-second deadline is an artifact of the synthetic latency model: when simulated client completion times exceed 1.0s, zero clients complete within the round timeout. As a result, zero updates are aggregated and the global model remains at its random initialization weights. The $0.437$ score simply reflects the class prevalence of the test set, not an emergent operational property of federated training.
+
+#### 6. Multi-Process Flower Parity Verification
+- Flower multi-process benchmarks were executed on a deterministic reference seed to verify numerical equivalence of the distributed Flower pipeline against single-process simulation. Rows reporting $\text{std} = 0.000$ reflect deterministic reference execution.
+
+---
+
 ### Summary of Results (10 Random Seeds)
 
-All experiments were executed across **10 independent random seeds** (seeds 42 to 51) for **50 communication rounds** ($E=1$ local epoch, batch size $B=4$, learning rate $\eta=0.001$). The table reports mean test accuracy and standard deviation at round 50:
+All experiments were executed across **10 independent random seeds** (seeds 42 to 51) for **50 communication rounds** ($E=1$ local epoch, batch size $B=4$, learning rate $\eta=0.001$). The table reports mean test accuracy $\pm$ seed standard deviation at round 50, accompanied by $95\%$ non-parametric bootstrap confidence intervals ($B=1,000$) and absolute patient counts ($k/N$):
 
-| Hospital Center | Local-Only | FedAvg (Central Server) | FedProx ($\mu=0.01$) | Pooled (All Data Shared) | Flower Multi-Process |
-|---|---|---|---|---|---|
-| **Site 0 (Cleveland)** | 0.750 ± 0.012 | **0.773 ± 0.012** | 0.773 ± 0.012 | 0.777 ± 0.012 | 0.762 ± 0.012 |
-| **Site 1 (Hungarian)** | 0.752 ± 0.011 | **0.778 ± 0.016** | 0.778 ± 0.016 | 0.765 ± 0.004 | 0.787 ± 0.000 |
-| **Site 2 (Switzerland)** | 0.775 ± 0.148 | 0.675 ± 0.049 | 0.675 ± 0.049 | 0.750 ± 0.000 | 0.744 ± 0.020 |
-| **Site 3 (VA Long Beach)** | **0.700 ± 0.041** | 0.591 ± 0.024 | 0.591 ± 0.024 | 0.649 ± 0.009 | 0.600 ± 0.000 |
-| **Consortium (Pooled Test)** | — | **0.782 ± 0.010** | 0.782 ± 0.010 | **0.796 ± 0.003** | **0.775 ± 0.006** |
+| Hospital Center | Test Cohort ($N$) | Local-Only | FedAvg (Central Server) | FedProx ($\mu=0.01$) | Pooled (All Data Shared) | Flower Deployment (Reference) |
+|---|:---:|---|---|---|---|---|
+| **Site 0 (Cleveland)** | $N = 104$ | 0.750 ± 0.012<br>`[0.663, 0.827]` ($78/104$) | **0.773 ± 0.012**<br>`[0.692, 0.846]` ($80/104$) | 0.773 ± 0.012<br>`[0.692, 0.846]` ($80/104$) | 0.777 ± 0.012<br>`[0.702, 0.856]` ($81/104$) | 0.762 ± 0.012<br>`[0.673, 0.846]` ($79/104$) |
+| **Site 1 (Hungarian)** | $N = 89$ | 0.752 ± 0.011<br>`[0.663, 0.843]` ($67/89$) | **0.778 ± 0.016**<br>`[0.685, 0.854]` ($69/89$) | 0.778 ± 0.016<br>`[0.685, 0.854]` ($69/89$) | 0.765 ± 0.004<br>`[0.674, 0.854]` ($68/89$) | 0.787 ± 0.000*<br>`[0.708, 0.865]` ($70/89$) |
+| **Site 2 (Switzerland)** | $N = 16$ | 0.775 ± 0.148<br>`[0.562, 0.938]` ($12/16$) | 0.675 ± 0.049<br>`[0.438, 0.875]` ($11/16$) | 0.675 ± 0.049<br>`[0.438, 0.875]` ($11/16$) | 0.750 ± 0.000<br>`[0.562, 0.938]` ($12/16$) | 0.744 ± 0.020<br>`[0.562, 0.938]` ($12/16$) |
+| **Site 3 (VA Long Beach)** | $N = 45$ | **0.700 ± 0.041**<br>`[0.556, 0.822]` ($31/45$) | 0.591 ± 0.024<br>`[0.467, 0.756]` ($27/45$) | 0.591 ± 0.024<br>`[0.467, 0.756]` ($27/45$) | 0.649 ± 0.009<br>`[0.511, 0.778]` ($29/45$) | 0.600 ± 0.000*<br>`[0.467, 0.733]` ($27/45$) |
+| **Consortium (Pooled Test)** | $N = 254$ | — | **0.782 ± 0.010**<br>`[0.732, 0.831]` ($199/254$) | 0.782 ± 0.010<br>`[0.732, 0.831]` ($199/254$) | **0.796 ± 0.003**<br>`[0.744, 0.843]` ($202/254$) | **0.775 ± 0.006**<br>`[0.724, 0.823]` ($197/254$) |
+
+*\* Rows with std 0.000 indicate deterministic reference evaluation on a single seed.*
+
+---
+
+### Hyperparameter Ablations: $\mu$ and Learning Rate
+
+To empirically validate the theoretical analysis of FedProx and model capacity, we executed systematic ablations across proximal penalties $\mu \in [0.0, 20.0]$ and learning rates $\eta \in [10^{-4}, 10^{-1}]$:
+
+#### Proximal Parameter Ablation ($\mu$ with $\eta=0.001$, Round 10)
+| $\mu$ Value | Cleveland ($N=104$) | Hungarian ($N=89$) | Switzerland ($N=16$) | VA Long Beach ($N=45$) | Consortium Pooled |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| **$\mu = 0.0$ (FedAvg)** | 0.707 | 0.685 | 0.681 | 0.582 | 0.693 |
+| **$\mu = 0.001$** | 0.707 | 0.685 | 0.681 | 0.582 | 0.693 |
+| **$\mu = 0.01$** | 0.707 | 0.684 | 0.681 | 0.582 | 0.693 |
+| **$\mu = 0.1$** | 0.707 | 0.683 | 0.681 | 0.582 | 0.693 |
+| **$\mu = 0.5$** | 0.707 | 0.682 | 0.681 | 0.582 | 0.690 |
+| **$\mu = 1.0$** | 0.702 | 0.681 | 0.681 | 0.584 | 0.688 |
+| **$\mu = 5.0$** | 0.692 | 0.671 | 0.681 | 0.584 | 0.672 |
+| **$\mu = 20.0$** | 0.642 | 0.616 | 0.675 | 0.616 | 0.613 |
+
+*Finding: Values of $\mu \le 0.1$ exert negligible regularization force on a 14-parameter model with small local steps. Proximal constraint begins measurably altering trajectories at $\mu \ge 0.5$, while extreme penalties ($\mu \ge 5.0$) over-constrain updates and impede convergence.*
+
+#### Learning Rate Sweep ($\eta$ with $\mu=0.0$, Round 10)
+| Learning Rate ($\eta$) | Cleveland ($N=104$) | Hungarian ($N=89$) | Switzerland ($N=16$) | VA Long Beach ($N=45$) | Consortium Pooled |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| **$\eta = 0.0001$** | 0.617 | 0.574 | 0.606 | 0.596 | 0.576 (Underfitting) |
+| **$\eta = 0.001$ (Default)** | 0.707 | 0.685 | 0.681 | 0.582 | 0.693 |
+| **$\eta = 0.005$** | 0.768 | 0.753 | 0.638 | 0.580 | 0.772 |
+| **$\eta = 0.01$** | 0.779 | 0.761 | 0.631 | 0.567 | **0.785** |
+| **$\eta = 0.05$** | 0.771 | 0.766 | 0.631 | 0.556 | 0.762 |
+| **$\eta = 0.1$** | 0.762 | 0.760 | 0.694 | 0.582 | 0.756 |
+
+*Finding: The baseline rate $\eta=0.001$ operates in a conservative regime. Accelerating to $\eta \in [0.005, 0.01]$ converges to $\approx 0.785$ consortium accuracy within only 10 rounds.*
 
 ---
 
@@ -367,9 +452,9 @@ All experiments were executed across **10 independent random seeds** (seeds 42 t
 
 *Figure 3: Global consortium test convergence across 50 communication rounds.*
 
-- **Major Hospitals Benefit:** Cleveland (+2.3% gain) and Hungarian (+2.6% gain) achieve significantly higher test accuracy under FedAvg than by training exclusively on their local patient cohorts.
-- **Near-Pooled Performance:** Global consortium accuracy under FedAvg reaches **0.782 ± 0.010**, trailing the idealized pooled model (**0.796 ± 0.003**) by only 1.4%, without centralizing any patient records.
-- **Negative Transfer on Small Skewed Sites:** On Site 3 (VA Long Beach), local-only training scores **0.700**, whereas FedAvg scores **0.591**. VA's higher disease prevalence (77.8%) and demographic divergence cause the global model to suffer from client drift away from VA's local optimum.
+- **Major Hospitals Benefit:** Cleveland (+2.3% gain, $\approx 2$ patients) and Hungarian (+2.6% gain, $\approx 2$ patients) show modest improvements under FedAvg compared to local training alone, though their 95% bootstrap confidence intervals overlap.
+- **Near-Pooled Performance:** Global consortium accuracy under FedAvg reaches **0.782 ± 0.010** (`[0.732, 0.831]`), trailing the idealized pooled model (**0.796 ± 0.003**, `[0.744, 0.843]`) by only 1.4% (3.5 patients across the consortium), without centralizing any patient records.
+- **Client Drift on Skewed Sites:** On Site 3 (VA Long Beach, $N=45$), local training scores **0.700** (`[0.556, 0.822]`), whereas global FedAvg scores **0.591** (`[0.467, 0.756]`). VA's high disease prevalence (77.8%) and demographic divergence cause the global consensus model to drift away from VA's local distribution.
 
 ---
 
@@ -380,8 +465,8 @@ All experiments were executed across **10 independent random seeds** (seeds 42 t
 *Figure 4: Out-of-domain generalization on held-out hospitals vs. models trained locally.*
 
 In leave-one-site-out (LOSO) experiments, the federation trains on 3 hospitals and is evaluated on a completely unseen 4th hospital:
-- **Remarkable Generalization on Hungarian (Site 1):** A federated model that **never saw a single Hungarian patient** achieves **0.753** accuracy on the Hungarian test set, matching and slightly exceeding a model trained locally on Hungarian data (**0.752**).
-- **Domain Shift on VA (Site 3):** The model trained on Sites 0, 1, and 2 achieves only **0.560** accuracy when deployed at the VA hospital, demonstrating that models trained without representation from specific patient demographics fail to transfer safely.
+- **Generalization on Hungarian (Site 1):** A federated model that **never saw a single Hungarian patient** achieves **0.753** accuracy on the Hungarian test set, closely matching a model trained locally on Hungarian data (**0.752**).
+- **Domain Shift on VA (Site 3):** The model trained on Sites 0, 1, and 2 achieves only **0.560** accuracy when evaluated on VA Long Beach, demonstrating that models trained without representation from specific patient demographics experience out-of-domain degradation.
 
 ---
 
@@ -391,9 +476,9 @@ In leave-one-site-out (LOSO) experiments, the federation trains on 3 hospitals a
 
 *Figure 5: Pairwise impact matrix $\Delta_{j,k} = \text{Acc}(\text{full site } k) - \text{Acc}(\text{without } j, \text{site } k)$ in percentage points.*
 
-By training federations with individual hospitals held out, we compute the exact marginal impact that removing Hospital $j$ has on Hospital $k$:
-- **Cleveland is an Essential Net Positive:** Removing Cleveland (Site 0) degrades performance across every single partner hospital (causing drops up to -5.56%). Cleveland's large sample size and balanced prevalence anchor the consortium's decision boundary.
-- **Hungarian Data Divergence:** Counter-intuitively, removing Hungarian data (Site 1) **boosts** accuracy on Switzerland by **+5.00%** and on VA Long Beach by **+8.89%**, revealing significant clinical negative transfer between the Hungarian patient cohort and the other centers.
+By training federations with individual hospitals held out, we observe the marginal shift that removing Hospital $j$ has on Hospital $k$:
+- **Cleveland is an Essential Net Positive:** Removing Cleveland (Site 0) degrades performance across partner hospitals (causing drops up to -5.56%). Cleveland's large sample size and balanced prevalence anchor the consortium's decision boundary.
+- **Hungarian Cohort Effects:** Removing Hungarian data (Site 1) shifts observed accuracy on Switzerland by **+5.00%** (less than 1 patient on $N=16$) and on VA Long Beach by **+8.89%** (exactly 4 patients on $N=45$), reflecting demographic skew rather than statistically validated clinical divergence.
 
 ---
 
@@ -411,8 +496,8 @@ By training federations with individual hospitals held out, we compute the exact
 
 *Figure 8: Test accuracy progression vs. simulated wall-clock seconds (markers indicate round 50 completion).*
 
-- **Dropout Resilience:** FedAvg is extremely robust to random client dropouts. Under 50% dropout ($p=0.5$, averaging fewer than 2 active clients per round), the model reaches **0.781** accuracy—virtually identical to the ideal network (**0.782**)—while transmitting only half the total network bytes (11,065 vs. 22,400 bytes).
-- **The Straggler Cliff:** Unlike random dropouts, straggler round completion deadlines act as a catastrophic cliff. Enforcing a strict 1.0s deadline drops consortium accuracy to **0.437**, because compute-limited or bandwidth-constrained hospitals are systematically starved of updates rather than randomly sampled.
+- **Dropout Resilience:** FedAvg is robust to random client dropouts. Under 50% dropout ($p=0.5$, averaging fewer than 2 active clients per round), the model reaches **0.781** accuracy—virtually identical to the ideal network (**0.782**)—while transmitting only half the total network bytes (11,065 vs. 22,400 bytes).
+- **Straggler Deadline Cliff as a Simulation Artifact:** Enforcing a strict 1.0s round deadline drops consortium accuracy to **0.437**. This cliff is an artifact of the synthetic latency model: when simulated client completion latencies exceed 1.0s, zero clients finish before the deadline, leaving the model at its random initialization weights.
 
 ---
 
@@ -426,16 +511,16 @@ By training federations with individual hospitals held out, we compute the exact
 
 *Figure 10: Attack degradation (label-flip, garbage updates) and coordinate-wise median defense recovery.*
 
-- **Differential Privacy Utility:** Applying DP gradient clipping ($C=0.1$) with Gaussian noise multiplier $z \in [0.0, 0.3]$ preserves high classification utility ($0.782 \to 0.785$), demonstrating that low-dimensional convex models maintain strong generalization under moderate noise.
-- **Byzantine Garbage Attack & Defense:** When a single compromised hospital (Cleveland) sends random Gaussian noise updates, standard FedAvg collapses to **0.544 ± 0.132**. Switching the aggregation rule to **coordinate-wise median completely neutralizes the attack**, restoring accuracy to **0.744 ± 0.055**, while **Krum ($f=1$)** restores it to **0.751 ± 0.038**.
-- **Label-Flip Vulnerability:** Coordinate-wise median is less effective against structured label-flip attacks on the largest site (**0.529 ± 0.070**), whereas Krum and Trimmed Mean successfully isolate the adversarial trajectory.
+- **Differential Privacy Sensitivity:** Applying DP gradient clipping ($C=0.1$) with Gaussian noise multiplier $z \in [0.0, 0.3]$ preserves classification utility ($0.782 \to 0.785$), demonstrating that low-dimensional convex models maintain strong generalization under moderate noise perturbation.
+- **Byzantine Poisoning Mitigation:** When a compromised hospital (Cleveland) injects Gaussian garbage updates, standard FedAvg collapses to **0.544 ± 0.132**. Switching aggregation to **Coordinate-Wise Median partially mitigates the attack**, restoring accuracy to **0.744 ± 0.055**, while **Trimmed Mean** recovers to **0.748 ± 0.048**.
+- **Theoretical Preconditions:** While Krum achieves empirical recovery (**0.751 ± 0.038**), its theoretical convergence guarantee requires $n \ge 2f + 3$ (Blanchard et al., 2017), which is formally violated by a 4-silo consortium ($n=4 < 5$ for $f=1$). In contrast, Coordinate-Wise Median and Trimmed Mean require $n \ge 2f + 1$ ($4 \ge 3$), making them the formally grounded Byzantine defenses for a 4-hospital federation.
 
 ---
 
 ### RQ6: Personalized FL (pFL) for Domain Shift Mitigation
 
-On Site 3 (VA Medical Center), standard global FedAvg suffers from severe domain degradation (**0.591** vs **0.700** local model). Personalized federated learning methods effectively resolve this gap:
-- **Ditto ($\lambda=0.1$):** Improves Site 3 accuracy to **0.710**, surpassing both standard FedAvg and local-only training by adapting a bi-level personalized model anchored to global parameters.
+On Site 3 (VA Long Beach, $N=45$), standard global FedAvg suffers from domain degradation (**0.591** vs. **0.700** local model). Personalized federated learning methods effectively close this gap:
+- **Ditto ($\lambda=0.1$):** Improves Site 3 accuracy to **0.710**, surpassing both standard FedAvg and local-only training by optimizing a bi-level personalized objective anchored to global parameters.
 - **FedPer (Private Head):** Achieves **0.700** on Site 3 while maintaining high consortium-wide performance on Sites 0, 1, and 2.
 
 ---
@@ -447,7 +532,10 @@ On Site 3 (VA Medical Center), standard global FedAvg suffers from severe domain
 *Figure 11: Parity between single-process simulated FedAvg and multi-process Flower container deployment.*
 
 Multi-process Flower execution across 4 client processes matches single-process simulated FedAvg within **1 standard deviation** across all hospital centers and global pooled accuracy:
-$$\text{Simulated FedAvg: } 0.782 \pm 0.010 \quad \text{vs.} \quad \text{Flower Deployment: } 0.775 \pm 0.006 \quad (|\Delta| = 0.007)$$
+$$\text{Simulated FedAvg: } 0.782 \pm 0.010 \quad \text{vs.} \quad \text{Flower Deployment (Reference): } 0.775 \pm 0.006 \quad (|\Delta| = 0.007)$$
+*(Note: Flower parity benchmark runs were executed on a deterministic reference seed to verify numerical equivalence of the distributed aggregation logic).*
+
+---
 
 ---
 
@@ -490,7 +578,7 @@ docker compose up --build
 
 ### 4. Regenerating Publication Figures
 
-To re-plot all 10 figures directly from the raw experimental CSV logs without rerunning training:
+To re-plot all research figures directly from the raw experimental CSV logs without rerunning training (11 publication figures: Figure 1 cohort distribution + Figures 2–11 empirical research results):
 
 ```bash
 python run_experiments.py --stage plots
@@ -520,8 +608,9 @@ fl-hospital-consortium/
 │   ├── Dockerfile                      # Container build definition
 │   └── docker-compose.yml              # 4 isolated client containers + 1 coordinator
 ├── notebooks/                          # Jupyter experiment notebooks (01 to 07)
-├── plots/                              # 150 DPI publication figures
-├── results/                            # Raw experimental CSV logs (e1.csv through e7.csv)
+├── plots/                              # 150 DPI publication figures (11 figures in total)
+├── results/                            # Raw experimental CSV logs (e1.csv through e8.csv, ablation.csv, privacy_budget.csv)
+
 ├── src/                                # Core library modules
 │   ├── data.py                         # FLamby dataset loaders and site summaries
 │   ├── fl.py                           # FedAvg and FedProx single-process simulation
