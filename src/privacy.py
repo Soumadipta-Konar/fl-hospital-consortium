@@ -42,6 +42,65 @@ def aggregate_median(client_weights):
         med_sd[k] = torch.median(stacked, dim=0).values
     return med_sd
 
+def aggregate_trimmed_mean(client_weights, beta=1):
+    n = len(client_weights)
+    if 2 * beta >= n:
+        return aggregate_median(client_weights)
+    trimmed_sd = {}
+    for k in client_weights[0].keys():
+        stacked = torch.stack([w[k].float() for w in client_weights], dim=0)
+        sorted_stacked, _ = torch.sort(stacked, dim=0)
+        trimmed = sorted_stacked[beta:n - beta]
+        trimmed_sd[k] = trimmed.mean(dim=0)
+    return trimmed_sd
+
+def aggregate_krum(client_weights, f=1):
+    n = len(client_weights)
+    if n <= 2:
+        return aggregate_median(client_weights)
+    flat_weights = [torch.cat([p.flatten().float() for p in w.values()]) for w in client_weights]
+    flat_mat = torch.stack(flat_weights, dim=0)
+
+    diffs = flat_mat.unsqueeze(1) - flat_mat.unsqueeze(0)
+    dists = torch.sum(diffs ** 2, dim=-1)
+
+    num_neighbors = max(1, n - f - 2)
+    scores = []
+    for i in range(n):
+        other_dists = torch.cat([dists[i, :i], dists[i, i + 1:]])
+        sorted_dists, _ = torch.sort(other_dists)
+        score = sorted_dists[:num_neighbors].sum().item()
+        scores.append(score)
+
+    best_idx = int(torch.argmin(torch.tensor(scores)).item())
+    return {k: client_weights[best_idx][k].clone().float() for k in client_weights[best_idx]}
+
+def aggregate_multi_krum(client_weights, f=1, m=2):
+    n = len(client_weights)
+    if n <= 2:
+        return aggregate_median(client_weights)
+    flat_weights = [torch.cat([p.flatten().float() for p in w.values()]) for w in client_weights]
+    flat_mat = torch.stack(flat_weights, dim=0)
+
+    diffs = flat_mat.unsqueeze(1) - flat_mat.unsqueeze(0)
+    dists = torch.sum(diffs ** 2, dim=-1)
+
+    num_neighbors = max(1, n - f - 2)
+    scores = []
+    for i in range(n):
+        other_dists = torch.cat([dists[i, :i], dists[i, i + 1:]])
+        sorted_dists, _ = torch.sort(other_dists)
+        score = sorted_dists[:num_neighbors].sum().item()
+        scores.append(score)
+
+    m = min(m, n)
+    top_indices = torch.topk(torch.tensor(scores), k=m, largest=False).indices.tolist()
+
+    avg_sd = {}
+    for k in client_weights[0].keys():
+        avg_sd[k] = torch.stack([client_weights[idx][k].float() for idx in top_indices], dim=0).mean(dim=0)
+    return avg_sd
+
 def poison_labels(y, q=1.0):
     if q <= 0.0:
         return y.clone()
@@ -51,7 +110,8 @@ def poison_labels(y, q=1.0):
 def run_privacy_fl(data, pooled_test, seeds, rounds=50, local_epochs=1, lr=0.001,
                    batch_size=4, clip_norm=None, noise_multiplier=0.0,
                    attack_type="none", attack_site=0, flip_q=1.0,
-                   garbage_scale=1.0, use_median=False, method="dp_fedavg",
+                   garbage_scale=1.0, use_median=False, aggregation_rule=None,
+                   beta=1, krum_f=1, krum_m=2, method="dp_fedavg",
                    scenario="clean", exp="e6"):
     loss_fn = get_loss_fn()
     train_ids = list(data.keys())
@@ -85,8 +145,14 @@ def run_privacy_fl(data, pooled_test, seeds, rounds=50, local_epochs=1, lr=0.001
 
             cumulative_bytes += len(train_ids) * 2 * PARAM_BYTES
 
-            if use_median:
+            if aggregation_rule == "median" or use_median:
                 new_weights = aggregate_median(client_weights)
+            elif aggregation_rule == "trimmed_mean":
+                new_weights = aggregate_trimmed_mean(client_weights, beta=beta)
+            elif aggregation_rule == "krum":
+                new_weights = aggregate_krum(client_weights, f=krum_f)
+            elif aggregation_rule == "multi_krum":
+                new_weights = aggregate_multi_krum(client_weights, f=krum_f, m=krum_m)
             else:
                 new_weights = dp_aggregate(
                     w_glob, client_deltas, clip_norm=clip_norm,

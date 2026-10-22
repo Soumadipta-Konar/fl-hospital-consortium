@@ -7,12 +7,11 @@ root_dir = Path(__file__).resolve().parent.parent
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 
-import numpy as np
 import pandas as pd
 import torch
 import flwr as fl
 from flwr.server.strategy import FedAvg
-from flwr.common import ndarrays_to_parameters, parameters_to_ndarrays
+from flwr.common import ndarrays_to_parameters
 from src.seed import seed_everything
 from src.models import Baseline, get_loss_fn, evaluate_model, PARAM_BYTES
 from src.data import load_pooled_data, load_all_sites
