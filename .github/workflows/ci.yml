@@ -85,6 +85,12 @@ jobs:
                   with urllib.request.urlopen(req, timeout=15) as resp, open(dest, 'wb') as f:
                       f.write(resp.read())
 
+          import flamby.datasets.fed_heart_disease as fhd
+          script_dir = Path(fhd.__file__).resolve().parent / 'dataset_creation_scripts'
+          script_dir.mkdir(parents=True, exist_ok=True)
+          cfg_content = f'dataset_path: {str(out_dir)}\ndownload_complete: true\npreprocessing_complete: true\n'
+          (script_dir / 'dataset_location.yaml').write_text(cfg_content)
+
           cfg_dir = Path.home() / '.config' / 'flamby'
           cfg_dir.mkdir(parents=True, exist_ok=True)
           cfg_file = cfg_dir / 'dataset_location.yaml'

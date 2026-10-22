@@ -1,3 +1,4 @@
+import os
 import warnings
 import pandas as pd
 import torch
@@ -16,9 +17,13 @@ def _get_fed_heart_disease_class():
 
 def load_site_data(site, train=True):
     FedHeartDisease = _get_fed_heart_disease_class()
+    data_dir = "data/fed_heart_disease" if os.path.exists("data/fed_heart_disease") else None
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
-        ds = FedHeartDisease(center=site, train=train, pooled=False)
+        kwargs = {"center": site, "train": train, "pooled": False}
+        if data_dir:
+            kwargs["data_path"] = data_dir
+        ds = FedHeartDisease(**kwargs)
     x = torch.stack([ds[i][0] for i in range(len(ds))])
     y = torch.stack([ds[i][1] for i in range(len(ds))])
     return x, y
@@ -36,9 +41,13 @@ def load_all_sites():
 
 def load_pooled_data(train=True):
     FedHeartDisease = _get_fed_heart_disease_class()
+    data_dir = "data/fed_heart_disease" if os.path.exists("data/fed_heart_disease") else None
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
-        ds = FedHeartDisease(train=train, pooled=True)
+        kwargs = {"train": train, "pooled": True}
+        if data_dir:
+            kwargs["data_path"] = data_dir
+        ds = FedHeartDisease(**kwargs)
     x = torch.stack([ds[i][0] for i in range(len(ds))])
     y = torch.stack([ds[i][1] for i in range(len(ds))])
     return x, y
