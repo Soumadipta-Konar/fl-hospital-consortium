@@ -1,0 +1,11 @@
+torch==2.14.1
+torchvision==0.29.1
+numpy==1.26.4
+pandas==3.0.6
+scikit-learn==1.9.1
+matplotlib==3.11.2
+jupyter==1.1.1
+flwr==1.41.0
+opacus==1.6.0
+wget==3.2
+flamby @ git+https://github.com/owkin/FLamby.git@edacf54d5211520583b0133d55ac39b6fda8324b

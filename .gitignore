@@ -1,0 +1,25 @@
+# Data and checkpoints
+data/
+*.pt
+*.pth
+checkpoints/
+
+# Virtual environment and caches
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+.pytest_cache/
+
+# OS and environment
+.env
+.DS_Store
+Thumbs.db
+
+# Documentation and logs
+docs/
+LOG.md
+*.log
+logs/
+papers/

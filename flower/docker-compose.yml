@@ -1,0 +1,51 @@
+services:
+  server:
+    build:
+      context: ..
+      dockerfile: flower/Dockerfile
+    command: python flower/server.py --rounds 50 --server-address 0.0.0.0:8080 --output-csv /app/results/e5.csv
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../results:/app/results
+      - ../data:/app/data:ro
+
+  client-cleveland:
+    build:
+      context: ..
+      dockerfile: flower/Dockerfile
+    command: python flower/client.py --site 0 --server-address server:8080
+    depends_on:
+      - server
+    volumes:
+      - ../data/fed_heart_disease/processed.cleveland.data:/app/data/fed_heart_disease/processed.cleveland.data:ro
+
+  client-hungarian:
+    build:
+      context: ..
+      dockerfile: flower/Dockerfile
+    command: python flower/client.py --site 1 --server-address server:8080
+    depends_on:
+      - server
+    volumes:
+      - ../data/fed_heart_disease/processed.hungarian.data:/app/data/fed_heart_disease/processed.hungarian.data:ro
+
+  client-switzerland:
+    build:
+      context: ..
+      dockerfile: flower/Dockerfile
+    command: python flower/client.py --site 2 --server-address server:8080
+    depends_on:
+      - server
+    volumes:
+      - ../data/fed_heart_disease/processed.switzerland.data:/app/data/fed_heart_disease/processed.switzerland.data:ro
+
+  client-va:
+    build:
+      context: ..
+      dockerfile: flower/Dockerfile
+    command: python flower/client.py --site 3 --server-address server:8080
+    depends_on:
+      - server
+    volumes:
+      - ../data/fed_heart_disease/processed.va.data:/app/data/fed_heart_disease/processed.va.data:ro
