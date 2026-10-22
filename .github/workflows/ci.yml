@@ -1,0 +1,126 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint & Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Linting Tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+
+      - name: Check Syntax & Critical Errors
+        run: |
+          flake8 src/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Check Style & Formatting
+        run: |
+          flake8 src/ tests/ --count --max-complexity=15 --max-line-length=160 --extend-ignore=E302,E305,E402,W293,E501 --statistics
+
+  test:
+    name: Test Suite (Python ${{ matrix.python-version }})
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Test Suite
+        run: |
+          pytest -v tests/
+
+  docker-validation:
+    name: Docker & Compose Validation
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Dockerfile Build
+        run: |
+          docker build -f flower/Dockerfile -t fl-consortium:ci .
+
+      - name: Validate Docker Compose Configuration
+        run: |
+          docker compose -f flower/docker-compose.yml config
+
+  pipeline-verification:
+    name: Pipeline & Plot Verification
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Verify Plot Regeneration from CSV
+        run: |
+          python -c "from src.plots import generate_all_plots; generate_all_plots(); print('All plots regenerated successfully in CI!')"
+
+      - name: Assert Generated Figures Exist
+        run: |
+          python -c "
+          from pathlib import Path
+          expected = [
+              'hospital_baselines.png', 'consortium_convergence.png', 'leave_one_out_generalization.png',
+              'hospital_contribution_matrix.png', 'client_dropout_resilience.png',
+              'straggler_deadlines_convergence.png', 'straggler_deadlines_wallclock.png',
+              'flower_deployment_parity.png', 'differential_privacy_tradeoff.png', 'byzantine_attacks_and_defense.png'
+          ]
+          plots_dir = Path('plots')
+          for p in expected:
+              target = plots_dir / p
+              assert target.exists() and target.stat().st_size > 1000, f'Missing or empty figure: {p}'
+          print('All 10 figures verified!')
+          "

@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/Benchmark-FLamby%20Fed--Heart--Disease-1F8A70?style=for-the-badge" alt="FLamby">
   <img src="https://img.shields.io/badge/Deployment-Docker%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Compose">
   <img src="https://img.shields.io/badge/License-AGPL_3.0-blue?style=for-the-badge" alt="License: AGPL-3.0">
+  <a href="https://github.com/Soumadipta-Konar/fl-hospital-consortium/actions/workflows/ci.yml"><img src="https://github.com/Soumadipta-Konar/fl-hospital-consortium/actions/workflows/ci.yml/badge.svg" alt="CI Pipeline"></a>
 </p>
 
 > [!IMPORTANT]
@@ -437,6 +438,14 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install pinned dependencies
 pip install -r requirements.txt
+```
+
+### Automated Testing & Sanity Checks
+
+To run the automated regression test suite (seeding reproducibility, data loader integrity, mathematical parity checks, CSV schema compliance, and figure generation):
+
+```bash
+pytest -v tests/
 ```
 
 ---
