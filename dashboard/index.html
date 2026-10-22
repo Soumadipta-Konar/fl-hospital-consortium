@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Consortium - Federated Learning Control Plane</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="dashboard-container">
+    <header>
+      <div class="logo-group">
+        <h1>Cross-Silo FL Hospital Consortium</h1>
+        <p>Interactive Control Plane & Research Benchmarking Simulator</p>
+      </div>
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        4 Hospitals Federated Active
+      </div>
+    </header>
+
+    <!-- Top KPI Grid -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Consortium Model Accuracy</div>
+        <div class="kpi-value" id="kpi-acc">78.2%</div>
+        <div class="kpi-sub">+1.2% over local hospital models</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Total Clinical Cohort</div>
+        <div class="kpi-value">740</div>
+        <div class="kpi-sub">Cleveland, Hungarian, Swiss, VA</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Byzantine Resilience</div>
+        <div class="kpi-value" id="kpi-defense">Krum / Median</div>
+        <div class="kpi-sub">Active defense layer engaged</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Privacy Guarantee</div>
+        <div class="kpi-value" id="kpi-privacy">&epsilon; = 2.45</div>
+        <div class="kpi-sub">&delta; = 10⁻⁵ | HIPAA Compliant</div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-baselines')">Consortium Baselines</button>
+      <button class="tab-btn" onclick="switchTab('tab-byzantine')">Byzantine Defense Lab</button>
+      <button class="tab-btn" onclick="switchTab('tab-systems')">Stragglers & FedAsync</button>
+      <button class="tab-btn" onclick="switchTab('tab-privacy')">Differential Privacy</button>
+      <button class="tab-btn" onclick="switchTab('tab-pfl')">Personalized FL (pFL)</button>
+    </nav>
+
+    <!-- TAB 1: BASELINES -->
+    <div id="tab-baselines" class="tab-content active">
+      <div class="main-card">
+        <div class="card-header">
+          <div class="card-title">Hospital Performance: Local vs Federated vs Pooled</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="baselinesChart"></canvas>
+        </div>
+        <div class="hospital-grid">
+          <div class="hospital-node">
+            <div class="node-title">Site 0: Cleveland Clinic</div>
+            <div class="node-metric"><span>Cohort:</span> <span>153 patients</span></div>
+            <div class="node-metric"><span>Local Acc:</span> <span>75.0%</span></div>
+            <div class="node-metric"><span>FedAvg Acc:</span> <span style="color:var(--accent-emerald);">77.3% (+2.3%)</span></div>
+          </div>
+          <div class="hospital-node">
+            <div class="node-title">Site 1: Hungarian Institute</div>
+            <div class="node-metric"><span>Cohort:</span> <span>147 patients</span></div>
+            <div class="node-metric"><span>Local Acc:</span> <span>75.2%</span></div>
+            <div class="node-metric"><span>FedAvg Acc:</span> <span style="color:var(--accent-emerald);">77.8% (+2.6%)</span></div>
+          </div>
+          <div class="hospital-node">
+            <div class="node-title">Site 2: Univ. Hospital Zurich</div>
+            <div class="node-metric"><span>Cohort:</span> <span>42 patients</span></div>
+            <div class="node-metric"><span>Local Acc:</span> <span>64.7%</span></div>
+            <div class="node-metric"><span>FedAvg Acc:</span> <span style="color:var(--accent-emerald);">67.5% (+2.8%)</span></div>
+          </div>
+          <div class="hospital-node">
+            <div class="node-title">Site 3: VA Medical Center</div>
+            <div class="node-metric"><span>Cohort:</span> <span>100 patients</span></div>
+            <div class="node-metric"><span>Local Acc:</span> <span>70.0%</span></div>
+            <div class="node-metric"><span>FedAvg Acc:</span> <span style="color:var(--accent-rose);">59.1% (Domain Shift)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: BYZANTINE DEFENSE LAB -->
+    <div id="tab-byzantine" class="tab-content">
+      <div class="main-card">
+        <div class="card-header">
+          <div class="card-title">Byzantine Adversarial Attack & Robust Aggregator Simulator</div>
+        </div>
+        <div class="control-panel">
+          <div class="form-group">
+            <label class="form-label">Adversary Attack Type</label>
+            <select id="attackSelect" class="form-select" onchange="updateByzantineSim()">
+              <option value="none">No Attack (Clean Training)</option>
+              <option value="garbage" selected>Gaussian Garbage Updates (Site 0)</option>
+              <option value="labelflip">50% Label-Flip Attack (Site 0)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Defense Aggregator Rule</label>
+            <select id="defenseSelect" class="form-select" onchange="updateByzantineSim()">
+              <option value="fedavg">Standard FedAvg (No Defense)</option>
+              <option value="median" selected>Coordinate-Wise Median</option>
+              <option value="trimmed_mean">Coordinate-Wise Trimmed Mean (&beta;=1)</option>
+              <option value="krum">Krum Euclidean Selection (f=1)</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="byzantineChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: SYSTEMS & FEDASYNC -->
+    <div id="tab-systems" class="tab-content">
+      <div class="main-card">
+        <div class="card-header">
+          <div class="card-title">Straggler Cliff vs Asynchronous FedAsync Optimization</div>
+        </div>
+        <div class="control-panel">
+          <div class="form-group">
+            <label class="form-label">Client Dropouts (p_drop)</label>
+            <select id="dropSelect" class="form-select" onchange="updateSystemsSim()">
+              <option value="0.0">p_drop = 0.0 (Zero dropouts)</option>
+              <option value="0.2">p_drop = 0.2 (20% dropouts)</option>
+              <option value="0.5" selected>p_drop = 0.5 (50% dropouts)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Round Deadline (Synchronous FL)</label>
+            <select id="deadlineSelect" class="form-select" onchange="updateSystemsSim()">
+              <option value="inf">Deadline = &infin; (Wait for all)</option>
+              <option value="2.0">Deadline = 2.0s</option>
+              <option value="1.0" selected>Deadline = 1.0s (Straggler Cliff)</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="systemsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: PRIVACY ACCOUNTANT -->
+    <div id="tab-privacy" class="tab-content">
+      <div class="main-card">
+        <div class="card-header">
+          <div class="card-title">Differential Privacy (RDP & Moments Accountant)</div>
+        </div>
+        <div class="control-panel">
+          <div class="form-group">
+            <label class="form-label">Gaussian Noise Multiplier (&sigma;): <span id="noiseVal">1.0</span></label>
+            <input type="range" id="noiseSlider" class="form-range" min="0.2" max="3.0" step="0.1" value="1.0" oninput="updatePrivacySim()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Communication Rounds: <span id="roundsVal">50</span></label>
+            <input type="range" id="roundsSlider" class="form-range" min="10" max="100" step="10" value="50" oninput="updatePrivacySim()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Clinical Compliance Certification</label>
+            <div id="complianceBadge" class="compliance-badge strict">HIPAA Compliant (&epsilon; = 2.45)</div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="privacyChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: PERSONALIZED FL -->
+    <div id="tab-pfl" class="tab-content">
+      <div class="main-card">
+        <div class="card-header">
+          <div class="card-title">Personalized FL: Ditto vs FedPer vs Global FedAvg on Site 3</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="pflChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
