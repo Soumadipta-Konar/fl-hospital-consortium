@@ -65,7 +65,38 @@ jobs:
       - name: Fetch FLamby Dataset
         continue-on-error: true
         run: |
-          python -m flamby.datasets.fed_heart_disease.dataset_creation_scripts.download --output-folder data/fed_heart_disease
+          python -c "
+          import os, urllib.request, yaml
+          from pathlib import Path
+
+          out_dir = Path('data/fed_heart_disease').resolve()
+          out_dir.mkdir(parents=True, exist_ok=True)
+
+          urls = {
+              'processed.cleveland.data': 'https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data',
+              'processed.hungarian.data': 'https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.hungarian.data',
+              'processed.switzerland.data': 'https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.switzerland.data',
+              'processed.va.data': 'https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.va.data',
+          }
+          for fname, url in urls.items():
+              dest = out_dir / fname
+              if not dest.exists():
+                  req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                  with urllib.request.urlopen(req, timeout=15) as resp, open(dest, 'wb') as f:
+                      f.write(resp.read())
+
+          cfg_dir = Path.home() / '.config' / 'flamby'
+          cfg_dir.mkdir(parents=True, exist_ok=True)
+          cfg_file = cfg_dir / 'dataset_location.yaml'
+          cfg = {}
+          if cfg_file.exists():
+              with open(cfg_file) as f:
+                  cfg = yaml.safe_load(f) or {}
+          cfg['fed_heart_disease'] = {'dataset_path': str(out_dir), 'debug': False}
+          with open(cfg_file, 'w') as f:
+              yaml.dump(cfg, f)
+          print('FLamby fed_heart_disease dataset and config successfully initialized!')
+          "
 
       - name: Run Test Suite
         run: |

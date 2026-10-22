@@ -1,6 +1,16 @@
 import subprocess
 import sys
 from pathlib import Path
+import pytest
+
+try:
+    import flamby
+    HAS_FLAMBY = True
+except ImportError:
+    HAS_FLAMBY = False
+
+DATA_DIR = Path("data/fed_heart_disease")
+HAS_DATA = DATA_DIR.exists() and len(list(DATA_DIR.glob("*.data"))) == 4
 
 
 def test_cli_help():
@@ -14,6 +24,7 @@ def test_cli_help():
     assert "--stage" in result.stdout
 
 
+@pytest.mark.skipif(not (HAS_FLAMBY and HAS_DATA), reason="FLamby library or raw dataset not present on disk")
 def test_cli_summary():
     result = subprocess.run(
         [sys.executable, "run_experiments.py", "--stage", "summary"],

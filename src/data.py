@@ -1,12 +1,21 @@
 import warnings
 import pandas as pd
 import torch
-from flamby.datasets.fed_heart_disease import FedHeartDisease
-
 SITE_NAMES = ["cleveland", "hungarian", "switzerland", "va"]
 NUM_SITES = 4
 
+def _get_fed_heart_disease_class():
+    try:
+        from flamby.datasets.fed_heart_disease import FedHeartDisease
+        return FedHeartDisease
+    except ImportError as e:
+        raise ImportError(
+            "FLamby is required to load FedHeartDisease data. "
+            "Install it via requirements.txt: pip install -r requirements.txt"
+        ) from e
+
 def load_site_data(site, train=True):
+    FedHeartDisease = _get_fed_heart_disease_class()
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
         ds = FedHeartDisease(center=site, train=train, pooled=False)
@@ -26,6 +35,7 @@ def load_all_sites():
     return data
 
 def load_pooled_data(train=True):
+    FedHeartDisease = _get_fed_heart_disease_class()
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
         ds = FedHeartDisease(train=train, pooled=True)

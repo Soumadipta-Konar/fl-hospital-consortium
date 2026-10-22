@@ -146,18 +146,13 @@ def main():
     print("=" * 60)
 
     if args.stage == "plots":
-        print(">>> Regenerating all 9 figures from results/...")
+        print(">>> Regenerating publication figures from results/...")
         generate_all_plots()
         print(f"[OK] Figures generated in {args.plots_dir}/")
         return
 
     if args.stage == "budget":
         run_stage_privacy_budget(args.output_dir, max_rounds=args.rounds)
-        return
-
-    if args.stage == "summary":
-        summary_df = get_site_summary()
-        print(summary_df.to_string(index=False))
         return
 
     # Check for FLamby dataset
@@ -168,6 +163,11 @@ def main():
         print("[!] FLamby dataset files not found in data/fed_heart_disease.")
         print("    Run: python -m flamby.datasets.fed_heart_disease.dataset_creation_scripts.download --output-folder data/fed_heart_disease")
         sys.exit(1)
+
+    if args.stage == "summary":
+        summary_df = get_site_summary()
+        print(summary_df.to_string(index=False))
+        return
 
     data = load_all_sites()
     pooled_tr = load_pooled_data(train=True)
