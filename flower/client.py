@@ -6,10 +6,8 @@ root_dir = Path(__file__).resolve().parent.parent
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 
-import numpy as np
 import torch
 import flwr as fl
-from src.seed import seed_everything
 from src.models import Baseline, get_loss_fn, evaluate_model
 from src.data import load_site_data
 
