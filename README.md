@@ -92,7 +92,6 @@ The repository includes a zero-dependency, client-side web application serving a
 ```
 
 #### Dashboard Design System & Features
-- **Strict High-Contrast Dark Theme:** Base `#0A0A0A` (Jet Black), surface cards `#1E1E1E` (Dark Slate), primary text `#E0E0E0`, secondary `#B0B0B0`, trust blue `#3B86D1`, success green `#21BF06`, and alert red `#E74C3C` 
 - **Tab 1: Consortium Baselines:** Comparative bar chart of Local-Only vs. FedAvg vs. Pooled upper bounds across all 4 hospital sites.
 - **Tab 2: Byzantine Defense Lab:** Interactive adversarial attacks (Gaussian noise, label flipping) against robust defense aggregators (Krum $f=1$, Coordinate-wise Median, Trimmed Mean $\beta=1$).
 - **Tab 3: Stragglers & FedAsync:** Interactive client dropouts ($p_{\text{drop}}$) and round timeout deadlines showing the Straggler Cliff vs. asynchronous staleness-damped optimization.
