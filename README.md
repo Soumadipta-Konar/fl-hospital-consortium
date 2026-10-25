@@ -21,7 +21,12 @@
 </p>
 
 > [!IMPORTANT]
-> **Research and Educational Simulation Only:** This repository is an empirical research and learning simulation of cross-silo federated optimization, differential privacy, and Byzantine robustness. It is not a clinical decision-support system and must not be used for medical diagnosis.
+> **Research Testbed — Not a Production-Grade Deployment:** This repository is an empirical **research testbed** and educational simulation of cross-silo federated optimization, differential privacy, and Byzantine robustness across healthcare institutions. It models a **14-parameter logistic regression** (13 tabular clinical covariates + 1 intercept) over **740 total patient records** across 4 hospital partitions from FLamby's Fed-Heart-Disease benchmark.
+> 
+> **Explicit Scope & Methodological Limits:**
+> - **Convex Optimization Regime:** The model is a strongly convex linear classifier ($d=14$). Observed dynamics (such as the numerical equivalence between FedAvg and FedProx with $\mu=0.01$) reflect low-dimensional convex drift ($E=1$ local epoch) and should not be confused with high-dimensional non-convex deep representations.
+> - **Sample Size & Sampling Sensitivity:** Test cohort sizes are small ($N=16$ on Zurich/Switzerland, $N=45$ on VA Long Beach). A single patient outcome shifts local Zurich accuracy by $6.25\%$, and a $+8.89\%$ change on VA Long Beach corresponds to exactly 4 patients. Non-parametric bootstrap confidence intervals (95% CI) overlap across baseline methods.
+> - **Differential Privacy & Statutory Standards:** Privacy accounting bounds ($\epsilon \approx 2.45, \delta = 10^{-5}$) reflect academic differential privacy benchmark conventions. Statutory regulations like HIPAA (45 CFR § 164.514) define de-identification via Safe Harbor or Expert Determination and do **not** define numerical $\epsilon$ limits.
 
 ---
 
@@ -94,8 +99,8 @@ The repository includes a zero-dependency, client-side web application serving a
 ┌────────────────────────────────────────────────────────────────────────┐
 │  Cross-Silo FL Hospital Consortium - Interactive Control Plane         │
 ├─────────────┬─────────────┬─────────────────────┬──────────────────────┤
-│ Accuracy    │ Cohort      │ Byzantine Defense   │ Privacy Guarantee    │
-│ 78.2%       │ 740         │ Krum / Median       │ ε = 2.45 (DP Bound)  │
+│ Accuracy    │ Cohort      │ Byzantine Defense   │ Academic Privacy     │
+│ 78.2%       │ 740         │ Krum / Median       │ ε = 2.45 (Academic)  │
 ├─────────────┴─────────────┴─────────────────────┴──────────────────────┤
 │ [Baselines] [Byzantine Lab] [Stragglers] [Differential Privacy] [pFL]  │
 └────────────────────────────────────────────────────────────────────────┘
@@ -598,7 +603,7 @@ fl-hospital-consortium/
 │   ├── index.html                      # Layout, control panels, and research figures gallery
 │   ├── style.css                       # Jet black #0A0A0A non-glassmorphic stylesheet
 │   ├── app.js                          # Real-time Chart.js simulation engines
-│   └── plots/                          # Publication-grade figures embedded in dashboard
+│   └── plots/                          # Research figures embedded in dashboard
 ├── scripts/                            # Operational utility tools
 │   └── speedup_video.py                # 2x video speedup and animated GIF generator
 ├── flower/                             # Multi-process Flower + Docker deployment
