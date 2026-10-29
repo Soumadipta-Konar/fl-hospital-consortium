@@ -667,6 +667,12 @@ If you use this benchmark, code, or experimental findings in your research, plea
 
 ---
 
+## Mentions
+
+The commit "fix(benchmark): address statistical rigor, bootstrap CIs, ablations, and framing" is included in the [XERJ Corpus Hub](https://hub.xerj.org/contributors/Soumadipta-Konar) under MIT terms, with the author's permission. The rest of this repository remains under AGPL-3.0.
+
+---
+
 ## License
 
 This project is licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0)](LICENSE). Dataset licenses are governed by their respective authors through FLamby and the UCI Machine Learning Repository.
