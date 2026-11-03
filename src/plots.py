@@ -229,10 +229,11 @@ def plot_byzantine_attacks(csv_path="results/e6.csv", out_path="plots/byzantine_
     fig, ax = setup_fig()
     scenarios = [
         ("dp_z0.0", "Clean FedAvg", "#1f77b4", "-"),
-        ("labelflip_q0.5", "Label-flip q=0.5 (FedAvg)", "#ff7f0e", "--"),
+        ("garbage_median", "Garbage update (Median)", "#2ca02c", "-"),
+        ("garbage_krum", "Garbage update (Krum - Fails 2f+3)", "#9467bd", "--"),
+        ("garbage_fedavg", "Garbage update (FedAvg)", "#8c564b", ":"),
         ("labelflip_median", "Label-flip q=0.5 (Median)", "#d62728", "-."),
-        ("garbage_fedavg", "Garbage update (FedAvg)", "#8c564b", "--"),
-        ("garbage_median", "Garbage update (Median)", "#2ca02c", "-")
+        ("labelflip_q0.5", "Label-flip q=0.5 (FedAvg)", "#ff7f0e", ":")
     ]
     for sc, lbl, col, ls in scenarios:
         sub = df[df["scenario"] == sc].groupby("round")["metric_value"].mean()

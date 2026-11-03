@@ -514,11 +514,13 @@ By training federations with individual hospitals held out, we observe the margi
 
 ![Byzantine Attacks and Defense](plots/byzantine_attacks_and_defense.png)
 
-*Figure 10: Attack degradation (label-flip, garbage updates) and coordinate-wise median defense recovery.*
+*Figure 10: Attack degradation (label-flip, garbage updates) and defense comparison (Coordinate-Wise Median recovery vs. Krum failure).*
 
 - **Differential Privacy Sensitivity:** Applying DP gradient clipping ($C=0.1$) with Gaussian noise multiplier $z \in [0.0, 0.3]$ preserves classification utility ($0.782 \to 0.785$), demonstrating that low-dimensional convex models maintain strong generalization under moderate noise perturbation.
 - **Byzantine Poisoning Mitigation:** When a compromised hospital (Cleveland) injects Gaussian garbage updates, standard FedAvg collapses to **0.544 ± 0.132**. Switching aggregation to **Coordinate-Wise Median partially mitigates the attack**, restoring accuracy to **0.744 ± 0.055**, while **Trimmed Mean** recovers to **0.748 ± 0.048**.
-- **Theoretical Preconditions:** While Krum achieves empirical recovery (**0.751 ± 0.038**), its theoretical convergence guarantee requires $n \ge 2f + 3$ (Blanchard et al., 2017), which is formally violated by a 4-silo consortium ($n=4 < 5$ for $f=1$). In contrast, Coordinate-Wise Median and Trimmed Mean require $n \ge 2f + 1$ ($4 \ge 3$), making them the formally grounded Byzantine defenses for a 4-hospital federation.
+- **Krum Failure and Theoretical Preconditions ($n \ge 2f + 3$):** In the benchmark plot (Figure 10, purple curve), Krum collapses under Gaussian garbage updates to **0.520 ± 0.072**, failing to defend the consortium. Theorem 1 of Blanchard et al. (2017) proves that Krum guarantees convergence to a benign gradient vector if and only if:
+  $$n \ge 2f + 3$$
+  For $f = 1$ adversary, Krum strictly requires at least $n \ge 5$ participating clients. In a 4-hospital consortium, $n = 4 < 5$, mathematically violating this precondition and allowing the adversary to deceive distance-based neighbor scoring ($n - f - 2 = 1$). In contrast, Coordinate-Wise Median and Trimmed Mean require $n \ge 2f + 1$ ($4 \ge 3$), making them the formally grounded Byzantine defenses for a 4-hospital federation.
 
 ---
 
